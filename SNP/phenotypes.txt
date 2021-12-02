@@ -1,0 +1,14 @@
+Calcification
+Collagen
+Fat10
+Fat40
+IPH
+SMC_rankNorm
+MAC_rankNorm
+Neutrophils_rankNorm
+MastCells_rankNorm
+VesselDensity_rankNorm
+OverallPlaquePhenotype
+Plaque_Vulnerability_Index
+Plasma_PCSK9
+Plasma_PCSK9_rankNorm
