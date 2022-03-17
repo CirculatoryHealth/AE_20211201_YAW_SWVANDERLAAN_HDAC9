@@ -133,27 +133,20 @@ You can load this project in RStudio by opening the file called 'AE_20211201_YAW
 ## Project structure
 
 <!--  You can add rows to this table, using "|" to separate columns.         -->
-File                                     | Description                | Usage         
----------------------------------------- | -------------------------- | --------------
-README.md                                | Description of project     | Human editable
-AE_20211201_YAW_SWVANDERLAAN_HDAC9.Rproj | Project file               | Loads project 
-LICENSE                                  | User permissions           | Read only     
-.worcs                                   | WORCS metadata YAML        | Read only     
-prepare_data.R                           | Script to process raw data | Human editable
-renv.lock                                | Reproducible R environment | Read only     
-File                       | Description                         | Usage         
--------------------------- | ----------------------------------- | --------------
-README.md                  | Description of project              | Human editable
-AE_TEMPLATE.Rproj          | Project file                        | Loads project
-LICENSE                    | User permissions                    | Read only
-.worcs                     | WORCS metadata YAML                 | Read only
-renv.lock                  | Reproducible R environment          | Read only
-images                     | image directory for project         | Human editable
-bulkRNAseq                 | bulkRNAseq analysis directory       | Human editable
-scRNAseq                   | scRNAseq analysis directory         | Human editable
-SNP                        | SNP analysis directory              | Human editable
-SOME_FANCY_PROJECTNAME     | Some results                        | Human editable
-scripts                    | Scripts directory                   | Human editable
+
+File                                      | Description                         | Usage         
+----------------------------------------  | ----------------------------------- | --------------
+README.md                                 | Description of project              | Human editable
+AE_TEMPLATE.Rproj                         | Project file                        | Loads project
+LICENSE                                   | User permissions                    | Read only
+.worcs                                    | WORCS metadata YAML                 | Read only
+renv.lock                                 | Reproducible R environment          | Read only
+images                                    | image directory for project         | Human editable
+bulkRNAseq                                | bulkRNAseq analysis directory       | Human editable
+scRNAseq                                  | scRNAseq analysis directory         | Human editable
+SNP                                       | SNP analysis directory              | Human editable
+SOME_FANCY_PROJECTNAME                    | Some results                        | Human editable
+scripts                                   | Scripts directory                   | Human editable
 
 <!--  You can consider adding the following to this file:                    -->
 <!--  * A citation reference for your project                                -->

@@ -1,2 +1,0 @@
-Gene	p_val	avg_log2FC	pct.1	pct.2	p_val_adj
-COL4A2	0.000132190977326567	-0.318776794638888	0.034	0.121	1

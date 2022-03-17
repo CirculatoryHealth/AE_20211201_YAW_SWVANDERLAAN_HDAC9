@@ -1,0 +1,13 @@
+genes,variables,statistic,p.value,parameter,method,padj
+CD36,epmajor.30days,3.89658170303302,0.0483844588903885,1,Kruskal-Wallis rank sum test,0.532229047794274
+CD36,epmajor.3years,0.278514247925771,0.597676688784103,1,Kruskal-Wallis rank sum test,1
+COL4A1,epmajor.30days,2.71335137466544,0.0995117338121351,1,Kruskal-Wallis rank sum test,0.995117338121351
+COL4A1,epmajor.3years,4.10042983921105,0.0428723126255398,1,Kruskal-Wallis rank sum test,0.514467751506478
+COL4A2,epmajor.30days,1.59959348931873,0.205960828731665,1,Kruskal-Wallis rank sum test,1
+COL4A2,epmajor.3years,1.53295180699503,0.215669971191712,1,Kruskal-Wallis rank sum test,1
+LDLR,epmajor.30days,0.424097941816171,0.514899301420113,1,Kruskal-Wallis rank sum test,1
+LDLR,epmajor.3years,0.0740529523952773,0.785524584015608,1,Kruskal-Wallis rank sum test,1
+PCSK9,epmajor.30days,0.0265997455190151,0.870444200137937,1,Kruskal-Wallis rank sum test,1
+PCSK9,epmajor.3years,0.49881204726337,0.48002256385644,1,Kruskal-Wallis rank sum test,1
+SCARF1,epmajor.30days,0.46434972433709,0.495598109105291,1,Kruskal-Wallis rank sum test,1
+SCARF1,epmajor.3years,0.0551927641175632,0.814261975507584,1,Kruskal-Wallis rank sum test,1
