@@ -613,9 +613,7 @@ detach(AEDB)
 
 ```
 
-We will also fix a history of CAD, stroke or peripheral intervention status
-variable. This will be based on `CAD_history`, `Stroke_history`, and
-`Peripheral.interv`
+We will also fix a history of CAD, stroke or peripheral intervention status variable. This will be based on `CAD_history`, `Stroke_history`, and `Peripheral.interv`
 
 ```{r FixCAD_History, message=FALSE, warning=FALSE}
 

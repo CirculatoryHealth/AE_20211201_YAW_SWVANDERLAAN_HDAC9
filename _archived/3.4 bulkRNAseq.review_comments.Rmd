@@ -1,0 +1,771 @@
+---
+title: "Reviewer comments"
+author: '[Sander W. van der Laan, PhD](https://swvanderlaan.github.io) | @swvanderlaan; Marios Georgakis, and many others.'
+date: '`r Sys.Date()`'
+output:
+  html_notebook: 
+    cache: yes
+    code_folding: hide
+    collapse: yes
+    df_print: paged
+    fig.align: center
+    fig_caption: yes
+    fig_height: 10
+    fig_retina: 2
+    fig_width: 12
+    theme: paper
+    toc: yes
+    toc_float:
+      collapsed: no
+      smooth_scroll: yes
+    highlight: tango
+mainfont: Helvetica
+subtitle: Accompanying 'Monocyte-chemoattractant protein-1 Levels in Human Atherosclerosis Associate with Plaque Vulnerability.'
+editor_options:
+  chunk_output_type: inline
+---
+```{r global_options, include = FALSE}
+# further define some knitr-options.
+knitr::opts_chunk$set(fig.width = 12, fig.height = 8, fig.path = 'Figures/',
+                      eval = TRUE, warning = FALSE, message = FALSE)
+```
+
+# Preparation
+
+Clean the environment.
+```{r ClearEnvironment, include = FALSE}
+rm(list = ls())
+```
+
+Set locations, and the working directory.
+```{r LocalSystem, include = FALSE}
+### Operating System Version
+### Mac Pro
+# ROOT_loc = "/Volumes/EliteProQx2Media"
+# GENOMIC_loc = "/Users/svanderlaan/iCloud/Genomics"
+
+### MacBook Pro
+# ROOT_loc = "/Users/swvanderlaan"
+# GENOMIC_loc = paste0(ROOT_loc, "/iCloud/Genomics")
+
+### MacBook Air
+ROOT_loc = "/Users/slaan3"
+GENOMIC_loc = paste0(ROOT_loc, "/iCloud/Genomics")
+
+### GitHub - Generic Locations
+AEDB_loc = paste0(GENOMIC_loc, "/AE-AAA_GS_DBs")
+LAB_loc = paste0(GENOMIC_loc, "/LabBusiness")
+RESULTS = paste0(ROOT_loc, "/PLINK/analyses/lookups/AE_20190912_010_MDICHGANS_SWVDLAAN_IL6_MCP1")
+RAWDATA = paste0(ROOT_loc, "/PLINK/_AE_ORIGINALS/AESCRNA/prepped_data")
+
+PROJECT_loc = paste0(ROOT_loc, "/PLINK/analyses/lookups/AE_20190912_010_MDICHGANS_SWVDLAAN_IL6_MCP1")
+
+### PLINK - Generic Locations
+# AEDB_loc = paste0(GENOMIC_loc, "/AE-AAA_GS_DBs")
+# LAB_loc = paste0(GENOMIC_loc, "/LabBusiness")
+# RESULTS = paste0(ROOT_loc, "/PLINK/analyses/lookups/AE_20190912_010_MDICHGANS_SWVDLAAN_IL6_MCP1")
+# RAWDATA = paste0(ROOT_loc, "/PLINK/_AE_ORIGINALS/AESCRNA/prepped_data")
+# 
+# PROJECT_loc = paste0(ROOT_loc, "/PLINK/analyses/lookups/AE_20190912_010_MDICHGANS_SWVDLAAN_IL6_MCP1")
+
+### SOME VARIABLES WE NEED DOWN THE LINE
+cat("\nDefining phenotypes and datasets.\n")
+PROJECTNAME="MCP1_pg_mL"
+# SUBPROJECTNAME=""
+
+cat("\nCreate a new analysis directory, including subdirectories.\n")
+# Analysis
+ifelse(!dir.exists(file.path(PROJECT_loc, "/",PROJECTNAME)), 
+       dir.create(file.path(PROJECT_loc, "/",PROJECTNAME)), 
+       FALSE)
+ANALYSIS_loc = paste0(PROJECT_loc,"/",PROJECTNAME)
+
+# Plots
+ifelse(!dir.exists(file.path(ANALYSIS_loc, "/PLOTS")), 
+       dir.create(file.path(ANALYSIS_loc, "/PLOTS")), 
+       FALSE)
+PLOT_loc = paste0(ANALYSIS_loc,"/PLOTS")
+
+# QC plots
+ifelse(!dir.exists(file.path(PLOT_loc, "/QC")), 
+       dir.create(file.path(PLOT_loc, "/QC")), 
+       FALSE)
+QC_loc = paste0(PLOT_loc,"/QC")
+
+# Output files
+ifelse(!dir.exists(file.path(ANALYSIS_loc, "/OUTPUT")), 
+       dir.create(file.path(ANALYSIS_loc, "/OUTPUT")), 
+       FALSE)
+OUT_loc = paste0(ANALYSIS_loc, "/OUTPUT")
+
+# COX analysis
+ifelse(!dir.exists(file.path(ANALYSIS_loc, "/COX")), 
+       dir.create(file.path(ANALYSIS_loc, "/COX")), 
+       FALSE)
+COX_loc = paste0(ANALYSIS_loc, "/COX")
+
+# Baseline characteristics
+ifelse(!dir.exists(file.path(ANALYSIS_loc, "/BASELINE")), 
+       dir.create(file.path(ANALYSIS_loc, "/BASELINE")), 
+       FALSE)
+BASELINE_loc = paste0(ANALYSIS_loc, "/BASELINE")
+
+cat("\nSetting working directory and listing its contents.\n")
+setwd(paste0(PROJECT_loc))
+getwd()
+list.files()
+```
+
+A package-installation function.
+```{r Function: installations, include = FALSE}
+install.packages.auto <- function(x) { 
+  x <- as.character(substitute(x)) 
+  if(isTRUE(x %in% .packages(all.available = TRUE))) { 
+    eval(parse(text = sprintf("require(\"%s\")", x)))
+  } else { 
+    # Update installed packages - this may mean a full upgrade of R, which in turn
+    # may not be warrented. 
+    # update.install.packages.auto(ask = FALSE) 
+    eval(parse(text = sprintf("install.packages(\"%s\", dependencies = TRUE, repos = \"https://cloud.r-project.org/\")", x)))
+  }
+  if(isTRUE(x %in% .packages(all.available = TRUE))) { 
+    eval(parse(text = sprintf("require(\"%s\")", x)))
+  } else {
+    if (!requireNamespace("BiocManager"))
+      install.packages("BiocManager")
+    # BiocManager::install() # this would entail updating installed packages, which in turned may not be warrented
+    eval(parse(text = sprintf("BiocManager::install(\"%s\")", x)))
+    eval(parse(text = sprintf("require(\"%s\")", x)))
+  }
+}
+```
+
+Load those packages.
+```{r Setting: loading_packages, message=FALSE, warning=FALSE}
+install.packages.auto("readr")
+install.packages.auto("optparse")
+install.packages.auto("tools")
+install.packages.auto("dplyr")
+install.packages.auto("tidyr")
+install.packages.auto("naniar")
+
+# To get 'data.table' with 'fwrite' to be able to directly write gzipped-files
+# Ref: https://stackoverflow.com/questions/42788401/is-possible-to-use-fwrite-from-data-table-with-gzfile
+# install.packages("data.table", repos = "https://Rdatatable.gitlab.io/data.table")
+library(data.table)
+
+install.packages.auto("tidyverse")
+install.packages.auto("knitr")
+install.packages.auto("DT")
+install.packages.auto("MASS")
+# install.packages.auto("Seurat") # latest version
+
+# Install the devtools package from Hadley Wickham
+install.packages.auto('devtools')
+
+install.packages.auto("haven")
+install.packages.auto("sjlabelled")
+install.packages.auto("sjPlot")
+install.packages.auto("labelled")
+install.packages.auto("tableone")
+
+install.packages.auto("ggpubr")
+
+```
+
+We will create a datestamp and define the Utrecht Science Park Colour Scheme.
+```{r Setting: Colors, include = FALSE}
+
+Today = format(as.Date(as.POSIXlt(Sys.time())), "%Y%m%d")
+Today.Report = format(as.Date(as.POSIXlt(Sys.time())), "%A, %B %d, %Y")
+
+### UtrechtScienceParkColoursScheme
+###
+### WebsitetoconvertHEXtoRGB:http://hex.colorrrs.com.
+### Forsomefunctionsyoushoulddividethesenumbersby255.
+### 
+###	No.	Color			      HEX	(RGB)						              CHR		  MAF/INFO
+###---------------------------------------------------------------------------------------
+###	1	  yellow			    #FBB820 (251,184,32)				      =>	1		or 1.0>INFO
+###	2	  gold			      #F59D10 (245,157,16)				      =>	2		
+###	3	  salmon			    #E55738 (229,87,56)				      =>	3		or 0.05<MAF<0.2 or 0.4<INFO<0.6
+###	4	  darkpink		    #DB003F ((219,0,63)				      =>	4		
+###	5	  lightpink		    #E35493 (227,84,147)				      =>	5		or 0.8<INFO<1.0
+###	6	  pink			      #D5267B (213,38,123)				      =>	6		
+###	7	  hardpink		    #CC0071 (204,0,113)				      =>	7		
+###	8	  lightpurple	    #A8448A (168,68,138)				      =>	8		
+###	9	  purple			    #9A3480 (154,52,128)				      =>	9		
+###	10	lavendel		    #8D5B9A (141,91,154)				      =>	10		
+###	11	bluepurple		  #705296 (112,82,150)				      =>	11		
+###	12	purpleblue		  #686AA9 (104,106,169)			      =>	12		
+###	13	lightpurpleblue	#6173AD (97,115,173/101,120,180)	=>	13		
+###	14	seablue			    #4C81BF (76,129,191)				      =>	14		
+###	15	skyblue			    #2F8BC9 (47,139,201)				      =>	15		
+###	16	azurblue		    #1290D9 (18,144,217)				      =>	16		or 0.01<MAF<0.05 or 0.2<INFO<0.4
+###	17	lightazurblue	  #1396D8 (19,150,216)				      =>	17		
+###	18	greenblue		    #15A6C1 (21,166,193)				      =>	18		
+###	19	seaweedgreen	  #5EB17F (94,177,127)				      =>	19		
+###	20	yellowgreen		  #86B833 (134,184,51)				      =>	20		
+###	21	lightmossgreen	#C5D220 (197,210,32)				      =>	21		
+###	22	mossgreen		    #9FC228 (159,194,40)				      =>	22		or MAF>0.20 or 0.6<INFO<0.8
+###	23	lightgreen	  	#78B113 (120,177,19)				      =>	23/X
+###	24	green			      #49A01D (73,160,29)				      =>	24/Y
+###	25	grey			      #595A5C (89,90,92)				        =>	25/XY	or MAF<0.01 or 0.0<INFO<0.2
+###	26	lightgrey		    #A2A3A4	(162,163,164)			      =>	26/MT
+###
+###	ADDITIONAL COLORS
+###	27	midgrey			#D7D8D7
+###	28	verylightgrey	#ECECEC"
+###	29	white			#FFFFFF
+###	30	black			#000000
+###----------------------------------------------------------------------------------------------
+
+uithof_color = c("#FBB820","#F59D10","#E55738","#DB003F","#E35493","#D5267B",
+                 "#CC0071","#A8448A","#9A3480","#8D5B9A","#705296","#686AA9",
+                 "#6173AD","#4C81BF","#2F8BC9","#1290D9","#1396D8","#15A6C1",
+                 "#5EB17F","#86B833","#C5D220","#9FC228","#78B113","#49A01D",
+                 "#595A5C","#A2A3A4", "#D7D8D7", "#ECECEC", "#FFFFFF", "#000000")
+
+uithof_color_legend = c("#FBB820", "#F59D10", "#E55738", "#DB003F", "#E35493",
+                        "#D5267B", "#CC0071", "#A8448A", "#9A3480", "#8D5B9A",
+                        "#705296", "#686AA9", "#6173AD", "#4C81BF", "#2F8BC9",
+                        "#1290D9", "#1396D8", "#15A6C1", "#5EB17F", "#86B833",
+                        "#C5D220", "#9FC228", "#78B113", "#49A01D", "#595A5C",
+                        "#A2A3A4", "#D7D8D7", "#ECECEC", "#FFFFFF", "#000000")
+
+#ggplot2 default color palette
+gg_color_hue <- function(n) {
+  hues = seq(15, 375, length = n + 1)
+  hcl(h = hues, l = 65, c = 100)[1:n]
+}
+
+### ----------------------------------------------------------------------------
+```
+
+
+# Background
+
+This notebook contains additional analyses and figures of the project "Monocyte-chemoattractant protein-1 Levels in Human Atherosclerosis Associate with Plaque Vulnerability." to accomodate the reviewer comments.
+
+
+# Loading data
+
+```{r Loading project data}
+# load(paste0(PROJECT_loc, "/",Today,".",PROJECTNAME,".additional_figures.RData"))
+load(paste0(PROJECT_loc, "/20210211.",PROJECTNAME,".additional_figures.RData"))
+```
+
+# Comparison plaque and plasma levels
+
+Here we draw a correlation between plasma and plaque MCP1 levels
+
+```{r PlasmaPlaqueSummaries}
+cat("Comparing descriptive statistics.\n")
+cat("* plasma levels, OLINK, arbitrary units [au]\n")
+summary(AEDB.CEA$MCP1_plasma_olink)
+
+cat("\n* plasma levels, OLINK, arbitrary units [au], inverse rank-normalized\n")
+summary(AEDB.CEA$MCP1_plasma_olink_rankNorm)
+
+cat("\n* plaque levels, LUMINEX, [pg/mL]\n")
+summary(AEDB.CEA$MCP1_pg_ml_2015)
+
+cat("'n* plaque levels, LUMINEX, [pg/mL], inverse rank-normalized\n")
+summary(AEDB.CEA$MCP1_pg_ml_2015_rank)
+
+
+```
+
+```{r PlasmaPlaqueCorrelations}
+
+ggpubr::ggscatter(AEDB.CEA, 
+                  x = "MCP1_plasma_olink_rankNorm", 
+                  y = "MCP1_pg_ml_2015_rank",
+                  color = "#1290D9",
+                  # fill = "Gender",
+                  # palette = c("#1290D9", "#DB003F"),
+                  add = "reg.line",
+                  add.params =  list(color = "black", linetype = 2),
+                  cor.coef = TRUE, cor.method = "spearman",
+                  xlim = c(-5, 5), ylim = c(-5, 5),
+                  xlab = "plasma levels",
+                  ylab = "plaque levels",
+                  title = "Comparing tissue-specific MCP1 levels, INT (plaque [pg/mL], plasma [au]",
+                  ggtheme = theme_minimal())
+
+ggsave(filename = paste0(QC_loc, "/",Today,".",PROJECTNAME,".Comparison.plasma_vs_plaque.pdf"),
+         plot = last_plot())
+ggsave(filename = paste0(QC_loc, "/",Today,".",PROJECTNAME,".Comparison.plasma_vs_plaque.png"),
+         plot = last_plot())
+
+```
+
+The overlap between plasma and plaque samples.
+
+```{r PlasmaPlaque Overlap}
+
+temp <- subset(AEDB.CEA, select = c("STUDY_NUMBER", "MCP1_pg_ml_2015_rank", "MCP1_plasma_olink_rankNorm"))
+
+temp_new <- temp[complete.cases(temp), ]
+dim(temp_new)
+
+# rm(temp, temp_new)
+
+```
+
+# Expression of MCP1 in single-cells from carotid plaques
+
+In a separate notebook we provide the results from the scRNAseq analysis: `scRNAseq/scRNAseq.nb.html`.
+
+# Correlation with monocyte counts
+
+In the past we did measure monocyte counts in a _subset_ of the Athero-Express. We first inspect what the overlap is with the plaque MCP1 measurements.
+
+
+## Data inspection
+```{r Load PBMC Samples}
+library(openxlsx)
+AEDB_mono <- openxlsx::read.xlsx(paste0(AEDB_loc, "/_AE_CircCells/AE_study_numbers_mono_FACS.xlsx"))
+
+head(AEDB_mono)
+
+AEDB_monoMCP1 <- merge(AEDB_mono, temp, by.x = "STUDY_NUMBER", by.y = "STUDY_NUMBER", sort = FALSE, all.x = TRUE)
+
+dim(AEDB_monoMCP1)
+
+head(AEDBraw)
+
+
+```
+
+```{r Load PBMC Data}
+library(openxlsx)
+PBMC_mono_complete <- fread(paste0(AEDB_loc, "/_AE_PBMCs/Mono_FACS_AE_complete_data.csv"))
+PBMC_mono_variables <- fread(paste0(AEDB_loc, "/_AE_PBMCs/Mono_FACS_AE_variabelen.csv"), header = FALSE)
+names(PBMC_mono_variables)[names(PBMC_mono_variables) == "V1"] <- "Variable"
+names(PBMC_mono_variables)[names(PBMC_mono_variables) == "V2"] <- "Description"
+
+str(PBMC_mono_complete)
+
+require(haven)
+PBMC_hamburg <- haven::read_sav(paste0(AEDB_loc, "/_AE_PBMCs/Results_samples_Hamburg2.sav"))
+PBMC_extra <- haven::read_sav(paste0(AEDB_loc, "/_AE_PBMCs/Extra_samples_sort_data.sav"))
+
+names(PBMC_hamburg)[names(PBMC_hamburg) == "AE#"] <- "STUDY_NUMBER"
+names(PBMC_extra)[names(PBMC_extra) == "AE#"] <- "STUDY_NUMBER"
+
+```
+
+```{r PBMC Comparing Overlap, message=FALSE, warning=FALSE}
+install.packages.auto("made4")
+
+PBMC_mono_complete_list <- unlist(PBMC_mono_complete$STUDY_NR)
+PBMC_hamburg_list <- unlist(list(PBMC_hamburg$STUDY_NUMBER))
+PBMC_extra_list <- unlist(list(PBMC_extra$STUDY_NUMBER))
+
+
+PBMC_mono_vs_hamburg <- comparelists(PBMC_mono_complete_list, PBMC_hamburg_list)
+PBMC_mono_vs_hamburg
+
+PBMC_mono_vs_extra <- comparelists(PBMC_mono_complete_list, PBMC_extra_list)
+PBMC_mono_vs_extra
+
+PBMC_hambug_vs_extra <- comparelists(PBMC_hamburg_list, PBMC_extra_list)
+PBMC_hambug_vs_extra
+
+
+```
+
+An overview of the data in `PBMC_mono_complete` and what it means.
+
+```{r PBMC variables}
+
+DT::datatable(PBMC_mono_variables)
+
+```
+
+## Merging monocyte data
+
+Here we merge the monocyte counts to the database for comparison.
+
+```{r PBMC AEDB.CEA Merge}
+
+AEDB.CEAmono <- merge(AEDB.CEA, PBMC_mono_complete, by.x = "STUDY_NUMBER", by.y = "STUDY_NR",
+                           sort = FALSE, all.x = TRUE)
+
+```
+
+
+## Correlation monocyte vs MCP1
+
+We now can correlate the circulating monocyte counts with plaque-derived MCP1 levels.
+
+```{r PBMC correlation Prep}
+
+names(AEDB.CEAmono)[names(AEDB.CEAmono) == "Total Mono_Absolute"] <- "Total_Mono_Absolute"
+
+AEDB.CEAmono$Total_Mono_Absolute_rank <- qnorm((rank(AEDB.CEAmono$Total_Mono_Absolute, na.last = "keep") - 0.5) / sum(!is.na(AEDB.CEAmono$Total_Mono_Absolute)))
+
+AEDB.CEAmono$Classical_Absolute_rank <- qnorm((rank(AEDB.CEAmono$Classical_Absolute, na.last = "keep") - 0.5) / sum(!is.na(AEDB.CEAmono$Classical_Absolute)))
+
+AEDB.CEAmono$Intermediate_Absolute_rank <- qnorm((rank(AEDB.CEAmono$Intermediate_Absolute, na.last = "keep") - 0.5) / sum(!is.na(AEDB.CEAmono$Intermediate_Absolute)))
+
+AEDB.CEAmono$Nonclassical_Absolute_rank <- qnorm((rank(AEDB.CEAmono$Nonclassical_Absolute, na.last = "keep") - 0.5) / sum(!is.na(AEDB.CEAmono$Nonclassical_Absolute)))
+
+```
+
+
+### Total monocyte vs MCP1
+```{r PBMC correlation Total, message=FALSE, warning=FALSE}
+
+ggpubr::ggscatter(AEDB.CEAmono, 
+                  x = "Total_Mono_Absolute_rank", 
+                  y = "MCP1_pg_ml_2015_rank",
+                  color = "#1290D9",
+                  # fill = "Gender",
+                  # palette = c("#1290D9", "#DB003F"),
+                  add = "reg.line",
+                  add.params =  list(color = "black", linetype = 2),
+                  cor.coef = TRUE, cor.method = "spearman",
+                  #xlim = c(-5, 5), ylim = c(-5, 5),
+                  xlab = "total absolute monocyte counts, INT",
+                  ylab = "MCP1 plaque levels, INT (plaque [pg/mL]",
+                  title = "Comparing circulating monocyte counts with MCP1 plaque levels",
+                  ggtheme = theme_minimal())
+
+ggsave(filename = paste0(QC_loc, "/",Today,".",PROJECTNAME,".Comparison.mono_vs_plaque.pdf"),
+         plot = last_plot())
+ggsave(filename = paste0(QC_loc, "/",Today,".",PROJECTNAME,".Comparison.mono_vs_plaque.png"),
+         plot = last_plot())
+```
+
+
+### Classical monocyte vs MCP1
+
+```{r PBMC correlation Classical, message=FALSE, warning=FALSE}
+ggpubr::ggscatter(AEDB.CEAmono, 
+                  x = "Classical_perc", 
+                  y = "MCP1_pg_ml_2015_rank",
+                  color = uithof_color[3],
+                  # fill = "Gender",
+                  # palette = c("#1290D9", "#DB003F"),
+                  add = "reg.line",
+                  add.params =  list(color = "black", linetype = 2),
+                  cor.coef = TRUE, cor.method = "spearman",
+                  #xlim = c(-5, 5), ylim = c(-5, 5),
+                  xlab = "classical monocyte %",
+                  ylab = "MCP1 plaque levels, INT (plaque [pg/mL]",
+                  title = "Comparing circulating classical monocyte % with MCP1 plaque levels",
+                  ggtheme = theme_minimal())
+
+ggsave(filename = paste0(QC_loc, "/",Today,".",PROJECTNAME,".Comparison.mono_classical_vs_plaque.pdf"),
+         plot = last_plot())
+ggsave(filename = paste0(QC_loc, "/",Today,".",PROJECTNAME,".Comparison.mono_classical_vs_plaque.png"),
+         plot = last_plot())
+ggpubr::ggscatter(AEDB.CEAmono, 
+                  x = "Classical_Absolute_rank", 
+                  y = "MCP1_pg_ml_2015_rank",
+                  color = uithof_color[3],
+                  # fill = "Gender",
+                  # palette = c("#1290D9", "#DB003F"),
+                  add = "reg.line",
+                  add.params =  list(color = "black", linetype = 2),
+                  cor.coef = TRUE, cor.method = "spearman",
+                  #xlim = c(-5, 5), ylim = c(-5, 5),
+                  xlab = "absolute classical monocyte counts, INT",
+                  ylab = "MCP1 plaque levels, INT (plaque [pg/mL]",
+                  title = "Comparing circulating classical monocyte counts with MCP1 plaque levels",
+                  ggtheme = theme_minimal())
+
+ggsave(filename = paste0(QC_loc, "/",Today,".",PROJECTNAME,".Comparison.mono_classical_counts_vs_plaque.pdf"),
+         plot = last_plot())
+ggsave(filename = paste0(QC_loc, "/",Today,".",PROJECTNAME,".Comparison.mono_classical_counts_vs_plaque.png"),
+         plot = last_plot())
+
+```
+
+
+### Intermediate monocyte vs MCP1
+
+```{r PBMC correlation Intermediate, message=FALSE, warning=FALSE}
+ggpubr::ggscatter(AEDB.CEAmono, 
+                  x = "Intermediate_perc", 
+                  y = "MCP1_pg_ml_2015_rank",
+                  color = uithof_color[8],
+                  # fill = "Gender",
+                  # palette = c("#1290D9", "#DB003F"),
+                  add = "reg.line",
+                  add.params =  list(color = "black", linetype = 2),
+                  cor.coef = TRUE, cor.method = "spearman",
+                  #xlim = c(-5, 5), ylim = c(-5, 5),
+                  xlab = "intermediate monocyte %",
+                  ylab = "MCP1 plaque levels, INT (plaque [pg/mL]",
+                  title = "Comparing circulating intermediate monocyte % with MCP1 plaque levels",
+                  ggtheme = theme_minimal())
+
+ggsave(filename = paste0(QC_loc, "/",Today,".",PROJECTNAME,".Comparison.mono_intermediate_vs_plaque.pdf"),
+         plot = last_plot())
+ggsave(filename = paste0(QC_loc, "/",Today,".",PROJECTNAME,".Comparison.mono_intermediate_vs_plaque.png"),
+         plot = last_plot())
+ggpubr::ggscatter(AEDB.CEAmono, 
+                  x = "Intermediate_Absolute_rank", 
+                  y = "MCP1_pg_ml_2015_rank",
+                  color = uithof_color[8],
+                  # fill = "Gender",
+                  # palette = c("#1290D9", "#DB003F"),
+                  add = "reg.line",
+                  add.params =  list(color = "black", linetype = 2),
+                  cor.coef = TRUE, cor.method = "spearman",
+                  #xlim = c(-5, 5), ylim = c(-5, 5),
+                  xlab = "absolute intermediate monocyte counts, INT",
+                  ylab = "MCP1 plaque levels, INT (plaque [pg/mL]",
+                  title = "Comparing circulating intermediate monocyte counts with MCP1 plaque levels",
+                  ggtheme = theme_minimal())
+
+ggsave(filename = paste0(QC_loc, "/",Today,".",PROJECTNAME,".Comparison.mono_intermediate_counts_vs_plaque.pdf"),
+         plot = last_plot())
+ggsave(filename = paste0(QC_loc, "/",Today,".",PROJECTNAME,".Comparison.mono_intermediate_counts_vs_plaque.png"),
+         plot = last_plot())
+
+
+```
+
+### Non-classical monocyte vs MCP1
+
+```{r PBMC correlation NonClassical, message=FALSE, warning=FALSE}
+ggpubr::ggscatter(AEDB.CEAmono, 
+                  x = "Nonclassical_perc", 
+                  y = "MCP1_pg_ml_2015_rank",
+                  color = uithof_color[19],
+                  # fill = "Gender",
+                  # palette = c("#1290D9", "#DB003F"),
+                  add = "reg.line",
+                  add.params =  list(color = "black", linetype = 2),
+                  cor.coef = TRUE, cor.method = "spearman",
+                  #xlim = c(-5, 5), ylim = c(-5, 5),
+                  xlab = "non-classical monocyte %",
+                  ylab = "MCP1 plaque levels, INT (plaque [pg/mL]",
+                  title = "Comparing circulating non-classical monocyte % with MCP1 plaque levels",
+                  ggtheme = theme_minimal())
+
+ggsave(filename = paste0(QC_loc, "/",Today,".",PROJECTNAME,".Comparison.mono_nonclassical_vs_plaque.pdf"),
+         plot = last_plot())
+ggsave(filename = paste0(QC_loc, "/",Today,".",PROJECTNAME,".Comparison.mono_nonclassical_vs_plaque.png"),
+         plot = last_plot())
+
+ggpubr::ggscatter(AEDB.CEAmono, 
+                  x = "Nonclassical_Absolute_rank", 
+                  y = "MCP1_pg_ml_2015_rank",
+                  color = uithof_color[19],
+                  # fill = "Gender",
+                  # palette = c("#1290D9", "#DB003F"),
+                  add = "reg.line",
+                  add.params =  list(color = "black", linetype = 2),
+                  cor.coef = TRUE, cor.method = "spearman",
+                  #xlim = c(-5, 5), ylim = c(-5, 5),
+                  xlab = "absolute non-classical monocyte counts, INT",
+                  ylab = "MCP1 plaque levels, INT (plaque [pg/mL]",
+                  title = "Comparing circulating non-classical monocyte counts with MCP1 plaque levels",
+                  ggtheme = theme_minimal())
+
+ggsave(filename = paste0(QC_loc, "/",Today,".",PROJECTNAME,".Comparison.mono_nonclassical_counts_vs_plaque.pdf"),
+         plot = last_plot())
+ggsave(filename = paste0(QC_loc, "/",Today,".",PROJECTNAME,".Comparison.mono_nonclassical_counts_vs_plaque.png"),
+         plot = last_plot())
+
+
+```
+
+
+# Cytokines vs. MCP1 levels
+
+We explore whether cytokines (only the ones associated with MCP1) also associate with plaque vulnerability, and even in a multivariable model include them together with MCP1. This way we only indirectly provide some clues about whether MCP1 is the primary driver of plaque vulnerability. 
+A lack of association between cytokines and plaque vulnerability in these models, would imply that they are the result of MCP1 increase independently of the effects of MCP1 on plaque vulnerability. And thus, not all of them together represent the response to the stimuli.
+
+
+## Model 1: Univariate cytokines/chemokines vs plaque vulnerability
+
+In this model we correct for _Age_, _Gender_, and _year of surgery_.
+
+Here we use the inverse-rank normalized data - visually this is more normally distributed.
+
+Analysis of the plaque vulnerability indez as a function of plaque cytokine levels.
+```{r CrossSec: Plaque_Vulnerability_Index - ordinal regression MODEL1 RANK, paged.print=TRUE}
+# For quick debug inspection
+# TRAITS.PROTEIN.RANK.extra = c("MCP1_pg_ml_2015_rank")
+# proteins_of_interest_rank_mcp1
+# proteins_of_interest_rank
+
+GLM.results <- data.frame(matrix(NA, ncol = 16, nrow = 0))
+for (protein in 1:length(proteins_of_interest_rank)) {
+  PROTEIN = proteins_of_interest_rank[protein]
+  cat(paste0("\nAnalysis of ",PROTEIN,".\n"))
+  TRAIT = "Plaque_Vulnerability_Index"
+    cat(paste0("\n- processing ",TRAIT,"\n\n"))
+    currentDF <- as.data.frame(AEDB.CEA %>%
+      dplyr::select(., PROTEIN, TRAIT, COVARIATES_M1, ORdate_epoch) %>%
+      filter(complete.cases(.))) %>%
+      filter_if(~is.numeric(.), all_vars(!is.infinite(.))) %>%
+      droplevels(.)
+    
+    # fix numeric OR year
+    currentDF$ORdate_year <- as.numeric(currentDF$ORdate_year)
+    
+    # for debug
+    # print(DT::datatable(currentDF))
+    # print(nrow(currentDF))
+    # print(str(currentDF))
+    # print(class(currentDF[,TRAIT]))
+    # table(currentDF$ORdate_year)
+    ### univariate
+     # + Hypertension.composite + DiabetesStatus + SmokerCurrent + 
+     #            Med.Statin.LLD + Med.all.antiplatelet + GFR_MDRD + BMI + 
+     #            CAD_history + Stroke_history + Peripheral.interv + stenose
+    fit <- polr(currentDF[,TRAIT] ~ currentDF[,PROTEIN] + Age + Gender + ORdate_year, 
+              data  =  currentDF, 
+              Hess = TRUE)
+    print(summary(fit))
+    
+    ## store table
+    (ctable <- coef(summary(fit)))
+
+    ## calculate and store p values
+    p <- pnorm(abs(ctable[, "t value"]), lower.tail = FALSE) * 2
+    
+    ## combined table
+    print((ctable <- cbind(ctable, "p value" = p)))
+  }
+
+
+```
+
+## Model 2: MCP1 and plus 1 cytokine/chemokine vs plaque vulnerability
+
+In this model we correct for _Age_, _Gender_, and _year of surgery_, and MCP1 plus _one_ cytokines.
+
+
+```{r CrossSec: Plaque_Vulnerability_Index - ordinal regression MODEL2 RANK, paged.print=TRUE}
+
+COVARIATES_M1.extra = c("MCP1_pg_ml_2015_rank")
+
+GLM.results <- data.frame(matrix(NA, ncol = 16, nrow = 0))
+for (protein in 1:length(proteins_of_interest_rank)) {
+  PROTEIN = proteins_of_interest_rank[protein]
+  cat(paste0("\nAnalysis of ",PROTEIN,".\n"))
+  TRAIT = "Plaque_Vulnerability_Index"
+    cat(paste0("\n- processing ",TRAIT,"\n\n"))
+    currentDF <- as.data.frame(AEDB.CEA %>%
+      dplyr::select(., PROTEIN, TRAIT, COVARIATES_M1, COVARIATES_M1.extra, ORdate_epoch) %>%
+      filter(complete.cases(.))) %>%
+      filter_if(~is.numeric(.), all_vars(!is.infinite(.))) %>%
+      droplevels(.)
+    
+    # fix numeric OR year
+    currentDF$ORdate_year <- as.numeric(currentDF$ORdate_year)
+    
+    # for debug
+    # print(DT::datatable(currentDF))
+    # print(nrow(currentDF))
+    # print(str(currentDF))
+    # print(class(currentDF[,TRAIT]))
+    # table(currentDF$ORdate_year)
+    ### univariate
+     # + Hypertension.composite + DiabetesStatus + SmokerCurrent + 
+     #            Med.Statin.LLD + Med.all.antiplatelet + GFR_MDRD + BMI + 
+     #            CAD_history + Stroke_history + Peripheral.interv + stenose
+    fit <- polr(currentDF[,TRAIT] ~ currentDF[,PROTEIN] + Age + Gender + ORdate_year + MCP1_pg_ml_2015_rank, 
+              data  =  currentDF, 
+              Hess = TRUE)
+    print(summary(fit))
+    
+    ## store table
+    (ctable <- coef(summary(fit)))
+
+    ## calculate and store p values
+    p <- pnorm(abs(ctable[, "t value"]), lower.tail = FALSE) * 2
+    
+    ## combined table
+    print((ctable <- cbind(ctable, "p value" = p)))
+  }
+
+```
+
+
+## Model 3: MCP1 and all cytokines/chemokines vs plaque vulnerability
+
+In this model we correct for _Age_, _Gender_, and _year of surgery_, and MCP1 plus _all_ cytokines (except MCP1 as measured through this technology, i.e. ELISA).
+
+
+```{r CrossSec: Plaque_Vulnerability_Index - ordinal regression MODEL3 RANK, paged.print=TRUE}
+
+COVARIATES_M1.extra = c("MCP1_pg_ml_2015_rank")
+
+GLM.results <- data.frame(matrix(NA, ncol = 16, nrow = 0))
+  TRAIT = "Plaque_Vulnerability_Index"
+
+    currentDF <- as.data.frame(AEDB.CEA %>%
+      dplyr::select(., proteins_of_interest_rank, TRAIT, COVARIATES_M1, COVARIATES_M1.extra, ORdate_epoch) %>%
+      filter(complete.cases(.))) %>%
+      filter_if(~is.numeric(.), all_vars(!is.infinite(.))) %>%
+      droplevels(.)
+    
+    # fix numeric OR year
+    currentDF$ORdate_year <- as.numeric(currentDF$ORdate_year)
+    
+    fit <- polr(currentDF[,TRAIT] ~ currentDF[,PROTEIN] + Age + Gender + ORdate_year + MCP1_pg_ml_2015_rank + IL2_rank + IL4_rank + IL5_rank + IL6_rank + IL8_rank + IL9_rank + IL10_rank + IL12_rank + IL13_rank + IL21_rank + INFG_rank + TNFA_rank + MIF_rank + MIP1a_rank + RANTES_rank + MIG_rank + IP10_rank + Eotaxin1_rank + TARC_rank + PARC_rank + MDC_rank + OPG_rank + sICAM1_rank + VEGFA_rank + TGFB_rank + MMP2_rank + MMP8_rank + MMP9_rank, 
+              data  =  currentDF, 
+              Hess = TRUE)
+    print(summary(fit))
+    
+    ## store table
+    (ctable <- coef(summary(fit)))
+
+    ## calculate and store p values
+    p <- pnorm(abs(ctable[, "t value"]), lower.tail = FALSE) * 2
+    
+    ## combined table
+    print((ctable <- cbind(ctable, "p value" = p)))
+
+```
+
+# Session information
+
+------
+
+    Version:      v1.0.1
+    Last update:  2021-02-12
+    Written by:   Sander W. van der Laan (s.w.vanderlaan-2[at]umcutrecht.nl).
+    Description:  Script to analyse MCP1 from the Ather-Express Biobank Study.
+    Minimum requirements: R version 3.5.2 (2018-12-20) -- 'Eggshell Igloo', macOS Mojave (10.14.2).
+    
+    **MoSCoW To-Do List**
+    The things we Must, Should, Could, and Would have given the time we have.
+    _M_
+
+    _S_
+    
+    _C_
+    
+    
+    _W_
+    
+    
+    **Changes log**
+    * v1.0.1 Added correlations in a subset with circulating monocyte data.
+    * v1.0.0 Inital version.
+    
+
+------
+
+```{r eval = TRUE}
+sessionInfo()
+```
+
+# Saving environment
+```{r Saving}
+save.image(paste0(PROJECT_loc, "/",Today,".",PROJECTNAME,".review_comments.RData"))
+```
+
+------
+<sup>&copy; 1979-2021 Sander W. van der Laan | s.w.vanderlaan-2[at]gmail.com | [swvanderlaan.github.io](https://swvanderlaan.github.io).</sup>
+------

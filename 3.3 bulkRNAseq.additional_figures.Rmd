@@ -1,0 +1,2574 @@
+---
+title: "Additional Figures"
+author: '[Sander W. van der Laan, PhD](https://swvanderlaan.github.io) | @swvanderlaan; Marios Georgakis, and many others.'
+date: '`r Sys.Date()`'
+output:
+  html_notebook: 
+    cache: yes
+    code_folding: hide
+    collapse: yes
+    df_print: paged
+    fig.align: center
+    fig_caption: yes
+    fig_height: 10
+    fig_retina: 2
+    fig_width: 12
+    theme: paper
+    toc: yes
+    toc_float:
+      collapsed: no
+      smooth_scroll: yes
+    highlight: tango
+mainfont: Helvetica
+subtitle: Accompanying 'Monocyte-chemoattractant protein-1 Levels in Human Atherosclerosis Associate with Plaque Vulnerability.'
+editor_options:
+  chunk_output_type: inline
+---
+```{r global_options, include = FALSE}
+# further define some knitr-options.
+knitr::opts_chunk$set(fig.width = 12, fig.height = 8, fig.path = 'Figures/',
+                      eval = TRUE, warning = FALSE, message = FALSE)
+```
+
+# Preparation
+
+Clean the environment.
+```{r ClearEnvironment, include = FALSE}
+rm(list = ls())
+```
+
+Set locations, and the working directory.
+```{r LocalSystem, include = FALSE}
+### Operating System Version
+### Mac Pro
+# ROOT_loc = "/Volumes/EliteProQx2Media"
+# GENOMIC_loc = "/Users/svanderlaan/iCloud/Genomics"
+
+### MacBook Pro
+# ROOT_loc = "/Users/swvanderlaan"
+# GENOMIC_loc = paste0(ROOT_loc, "/iCloud/Genomics")
+
+### MacBook Air
+ROOT_loc = "/Users/slaan3"
+GENOMIC_loc = paste0(ROOT_loc, "/iCloud/Genomics")
+
+### GitHub - Generic Locations
+AEDB_loc = paste0(GENOMIC_loc, "/AE-AAA_GS_DBs")
+LAB_loc = paste0(GENOMIC_loc, "/LabBusiness")
+RESULTS = paste0(ROOT_loc, "/PLINK/analyses/lookups/AE_20190912_010_MDICHGANS_SWVDLAAN_IL6_MCP1")
+RAWDATA = paste0(ROOT_loc, "/PLINK/_AE_ORIGINALS/AESCRNA/prepped_data")
+
+PROJECT_loc = paste0(ROOT_loc, "/PLINK/analyses/lookups/AE_20190912_010_MDICHGANS_SWVDLAAN_IL6_MCP1")
+
+### PLINK - Generic Locations
+# AEDB_loc = paste0(GENOMIC_loc, "/AE-AAA_GS_DBs")
+# LAB_loc = paste0(GENOMIC_loc, "/LabBusiness")
+# RESULTS = paste0(ROOT_loc, "/PLINK/analyses/lookups/AE_20190912_010_MDICHGANS_SWVDLAAN_IL6_MCP1")
+# RAWDATA = paste0(ROOT_loc, "/PLINK/_AE_ORIGINALS/AESCRNA/prepped_data")
+# 
+# PROJECT_loc = paste0(ROOT_loc, "/PLINK/analyses/lookups/AE_20190912_010_MDICHGANS_SWVDLAAN_IL6_MCP1")
+
+### SOME VARIABLES WE NEED DOWN THE LINE
+cat("\nDefining phenotypes and datasets.\n")
+PROJECTNAME="MCP1_pg_mL"
+# SUBPROJECTNAME=""
+
+cat("\nCreate a new analysis directory, including subdirectories.\n")
+# Analysis
+ifelse(!dir.exists(file.path(PROJECT_loc, "/",PROJECTNAME)), 
+       dir.create(file.path(PROJECT_loc, "/",PROJECTNAME)), 
+       FALSE)
+ANALYSIS_loc = paste0(PROJECT_loc,"/",PROJECTNAME)
+
+# Plots
+ifelse(!dir.exists(file.path(ANALYSIS_loc, "/PLOTS")), 
+       dir.create(file.path(ANALYSIS_loc, "/PLOTS")), 
+       FALSE)
+PLOT_loc = paste0(ANALYSIS_loc,"/PLOTS")
+
+# QC plots
+ifelse(!dir.exists(file.path(PLOT_loc, "/QC")), 
+       dir.create(file.path(PLOT_loc, "/QC")), 
+       FALSE)
+QC_loc = paste0(PLOT_loc,"/QC")
+
+# Output files
+ifelse(!dir.exists(file.path(ANALYSIS_loc, "/OUTPUT")), 
+       dir.create(file.path(ANALYSIS_loc, "/OUTPUT")), 
+       FALSE)
+OUT_loc = paste0(ANALYSIS_loc, "/OUTPUT")
+
+# COX analysis
+ifelse(!dir.exists(file.path(ANALYSIS_loc, "/COX")), 
+       dir.create(file.path(ANALYSIS_loc, "/COX")), 
+       FALSE)
+COX_loc = paste0(ANALYSIS_loc, "/COX")
+
+# Baseline characteristics
+ifelse(!dir.exists(file.path(ANALYSIS_loc, "/BASELINE")), 
+       dir.create(file.path(ANALYSIS_loc, "/BASELINE")), 
+       FALSE)
+BASELINE_loc = paste0(ANALYSIS_loc, "/BASELINE")
+
+cat("\nSetting working directory and listing its contents.\n")
+setwd(paste0(PROJECT_loc))
+getwd()
+list.files()
+```
+
+A package-installation function.
+```{r Function: installations, include = FALSE}
+install.packages.auto <- function(x) { 
+  x <- as.character(substitute(x)) 
+  if(isTRUE(x %in% .packages(all.available = TRUE))) { 
+    eval(parse(text = sprintf("require(\"%s\")", x)))
+  } else { 
+    # Update installed packages - this may mean a full upgrade of R, which in turn
+    # may not be warrented. 
+    # update.install.packages.auto(ask = FALSE) 
+    eval(parse(text = sprintf("install.packages(\"%s\", dependencies = TRUE, repos = \"https://cloud.r-project.org/\")", x)))
+  }
+  if(isTRUE(x %in% .packages(all.available = TRUE))) { 
+    eval(parse(text = sprintf("require(\"%s\")", x)))
+  } else {
+    if (!requireNamespace("BiocManager"))
+      install.packages("BiocManager")
+    # BiocManager::install() # this would entail updating installed packages, which in turned may not be warrented
+    eval(parse(text = sprintf("BiocManager::install(\"%s\")", x)))
+    eval(parse(text = sprintf("require(\"%s\")", x)))
+  }
+}
+```
+
+Load those packages.
+```{r Setting: loading_packages, message=FALSE, warning=FALSE}
+install.packages.auto("readr")
+install.packages.auto("optparse")
+install.packages.auto("tools")
+install.packages.auto("dplyr")
+install.packages.auto("tidyr")
+install.packages.auto("naniar")
+
+# To get 'data.table' with 'fwrite' to be able to directly write gzipped-files
+# Ref: https://stackoverflow.com/questions/42788401/is-possible-to-use-fwrite-from-data-table-with-gzfile
+# install.packages("data.table", repos = "https://Rdatatable.gitlab.io/data.table")
+library(data.table)
+
+install.packages.auto("tidyverse")
+install.packages.auto("knitr")
+install.packages.auto("DT")
+install.packages.auto("MASS")
+# install.packages.auto("Seurat") # latest version
+
+# Install the devtools package from Hadley Wickham
+install.packages.auto('devtools')
+
+install.packages.auto("haven")
+install.packages.auto("sjlabelled")
+install.packages.auto("sjPlot")
+install.packages.auto("labelled")
+install.packages.auto("tableone")
+
+install.packages.auto("ggpubr")
+
+```
+
+We will create a datestamp and define the Utrecht Science Park Colour Scheme.
+```{r Setting: Colors, include = FALSE}
+
+Today = format(as.Date(as.POSIXlt(Sys.time())), "%Y%m%d")
+Today.Report = format(as.Date(as.POSIXlt(Sys.time())), "%A, %B %d, %Y")
+
+### UtrechtScienceParkColoursScheme
+###
+### WebsitetoconvertHEXtoRGB:http://hex.colorrrs.com.
+### Forsomefunctionsyoushoulddividethesenumbersby255.
+### 
+###	No.	Color			      HEX	(RGB)						              CHR		  MAF/INFO
+###---------------------------------------------------------------------------------------
+###	1	  yellow			    #FBB820 (251,184,32)				      =>	1		or 1.0>INFO
+###	2	  gold			      #F59D10 (245,157,16)				      =>	2		
+###	3	  salmon			    #E55738 (229,87,56)				      =>	3		or 0.05<MAF<0.2 or 0.4<INFO<0.6
+###	4	  darkpink		    #DB003F ((219,0,63)				      =>	4		
+###	5	  lightpink		    #E35493 (227,84,147)				      =>	5		or 0.8<INFO<1.0
+###	6	  pink			      #D5267B (213,38,123)				      =>	6		
+###	7	  hardpink		    #CC0071 (204,0,113)				      =>	7		
+###	8	  lightpurple	    #A8448A (168,68,138)				      =>	8		
+###	9	  purple			    #9A3480 (154,52,128)				      =>	9		
+###	10	lavendel		    #8D5B9A (141,91,154)				      =>	10		
+###	11	bluepurple		  #705296 (112,82,150)				      =>	11		
+###	12	purpleblue		  #686AA9 (104,106,169)			      =>	12		
+###	13	lightpurpleblue	#6173AD (97,115,173/101,120,180)	=>	13		
+###	14	seablue			    #4C81BF (76,129,191)				      =>	14		
+###	15	skyblue			    #2F8BC9 (47,139,201)				      =>	15		
+###	16	azurblue		    #1290D9 (18,144,217)				      =>	16		or 0.01<MAF<0.05 or 0.2<INFO<0.4
+###	17	lightazurblue	  #1396D8 (19,150,216)				      =>	17		
+###	18	greenblue		    #15A6C1 (21,166,193)				      =>	18		
+###	19	seaweedgreen	  #5EB17F (94,177,127)				      =>	19		
+###	20	yellowgreen		  #86B833 (134,184,51)				      =>	20		
+###	21	lightmossgreen	#C5D220 (197,210,32)				      =>	21		
+###	22	mossgreen		    #9FC228 (159,194,40)				      =>	22		or MAF>0.20 or 0.6<INFO<0.8
+###	23	lightgreen	  	#78B113 (120,177,19)				      =>	23/X
+###	24	green			      #49A01D (73,160,29)				      =>	24/Y
+###	25	grey			      #595A5C (89,90,92)				        =>	25/XY	or MAF<0.01 or 0.0<INFO<0.2
+###	26	lightgrey		    #A2A3A4	(162,163,164)			      =>	26/MT
+###
+###	ADDITIONAL COLORS
+###	27	midgrey			#D7D8D7
+###	28	verylightgrey	#ECECEC"
+###	29	white			#FFFFFF
+###	30	black			#000000
+###----------------------------------------------------------------------------------------------
+
+uithof_color = c("#FBB820","#F59D10","#E55738","#DB003F","#E35493","#D5267B",
+                 "#CC0071","#A8448A","#9A3480","#8D5B9A","#705296","#686AA9",
+                 "#6173AD","#4C81BF","#2F8BC9","#1290D9","#1396D8","#15A6C1",
+                 "#5EB17F","#86B833","#C5D220","#9FC228","#78B113","#49A01D",
+                 "#595A5C","#A2A3A4", "#D7D8D7", "#ECECEC", "#FFFFFF", "#000000")
+
+uithof_color_legend = c("#FBB820", "#F59D10", "#E55738", "#DB003F", "#E35493",
+                        "#D5267B", "#CC0071", "#A8448A", "#9A3480", "#8D5B9A",
+                        "#705296", "#686AA9", "#6173AD", "#4C81BF", "#2F8BC9",
+                        "#1290D9", "#1396D8", "#15A6C1", "#5EB17F", "#86B833",
+                        "#C5D220", "#9FC228", "#78B113", "#49A01D", "#595A5C",
+                        "#A2A3A4", "#D7D8D7", "#ECECEC", "#FFFFFF", "#000000")
+
+#ggplot2 default color palette
+gg_color_hue <- function(n) {
+  hues = seq(15, 375, length = n + 1)
+  hcl(h = hues, l = 65, c = 100)[1:n]
+}
+
+### ----------------------------------------------------------------------------
+```
+
+
+# Background
+
+This notebook contains additional figures of the project "Monocyte-chemoattractant protein-1 Levels in Human Atherosclerosis Associate with Plaque Vulnerability.".
+
+
+
+# Loading data
+
+```{r Loading project data}
+load(paste0(PROJECT_loc, "/",Today,".",PROJECTNAME,".main_analyses.RData"))
+```
+
+
+
+# Additional figures
+
+## Age and sex
+We want to create per-age-group figures. 
+
+- Box and Whisker plot for MCP-1 plaque levels by sex.
+- Box and Whisker plot for MCP-1 plaque levels by (sex and) age group (<55, 55-64, 65-74, 75-84, 85+).
+
+
+### Inverse-rank transformed data
+
+```{r MCP1 per Sex, ranked}
+
+# ?ggpubr::ggboxplot()
+
+# Global test
+compare_means(MCP1_pg_ml_2015_rank ~ Gender,  data = AEDB.CEA, method = "kruskal.test")
+ggpubr::ggboxplot(AEDB.CEA, 
+                  x = c("Gender"),
+                  y = "MCP1_pg_ml_2015_rank", 
+                  xlab = "gender",
+                  ylab = "MCP1 plaque [pg/mL]\n(inverse-rank transformation)",
+                  color = "Gender",
+                  palette = c("#D5267B", "#1290D9"),
+                  add = "jitter") +
+  stat_compare_means(aes(group = Gender), label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.Gender.pdf"), plot = last_plot())
+
+```
+
+### Raw data
+
+Simalarly but now for the raw data as median ± interquartile range.
+
+```{r MCP1 per Sex}
+
+# ?ggpubr::ggboxplot()
+compare_means(MCP1_pg_ml_2015 ~ Gender,  data = AEDB.CEA, method = "kruskal.test")
+ggpubr::ggboxplot(AEDB.CEA, 
+                  x = c("Gender"),
+                  y = "MCP1_pg_ml_2015", 
+                  xlab = "gender",
+                  ylab = "MCP1 plaque [pg/mL]\n(inverse-rank transformation)",
+                  color = "Gender",
+                  palette = c("#D5267B", "#1290D9"),
+                  add = "jitter") +
+  stat_compare_means(aes(group = Gender), label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.raw.Gender.pdf"), plot = last_plot())
+
+
+```
+
+```{r AgeGroups}
+library(dplyr)
+
+AEDB.CEA <- AEDB.CEA %>% mutate(AgeGroup = factor(case_when(Age < 55 ~ "<55",
+                                                     Age >= 55  & Age <= 64 ~ "55-64",
+                                                     Age >= 65  & Age <= 74 ~ "65-74",
+                                                     Age >= 75  & Age <= 84 ~ "75-84",
+                                                     Age >= 85 ~ "85+"))) 
+
+AEDB.CEA <- AEDB.CEA %>% mutate(AgeGroupSex = factor(case_when(Age < 55 & Gender == "male" ~ "<55 males" ,
+                                                        Age >= 55  & Age <= 64 & Gender == "male"~ "55-64 males",
+                                                        Age >= 65  & Age <= 74 & Gender == "male"~ "65-74 males",
+                                                        Age >= 75  & Age <= 84 & Gender == "male"~ "75-84 males",
+                                                        Age >= 85 & Gender == "male"~ "85+ males",
+                                                        Age < 55 & Gender == "female" ~ "<55 females" ,
+                                                        Age >= 55  & Age <= 64 & Gender == "female"~ "55-64 females ",
+                                                        Age >= 65  & Age <= 74 & Gender == "female"~ "65-74 females",
+                                                        Age >= 75  & Age <= 84 & Gender == "female"~ "75-84 females",
+                                                        Age >= 85 & Gender == "female"~ "85+ females")))
+
+table(AEDB.CEA$AgeGroup, AEDB.CEA$Gender)
+table(AEDB.CEA$AgeGroupSex)
+
+```
+
+Now we can draw some graphs of plaque MCP1 levels per sex and age group.
+
+### Inverse-rank transformed data
+
+```{r MCP1 per AgeGroup per Sex, ranked}
+
+# ?ggpubr::ggboxplot()
+
+# Global test
+compare_means(MCP1_pg_ml_2015_rank ~ AgeGroup,  data = AEDB.CEA, method = "kruskal.test")
+ggpubr::ggboxplot(AEDB.CEA, 
+                  x = c("AgeGroup"),
+                  y = "MCP1_pg_ml_2015_rank", 
+                  xlab = "Age groups (years)",
+                  ylab = "MCP1 plaque [pg/mL]\n(inverse-rank transformation)",
+                  color = "AgeGroup",
+                  palette = "npg",
+                  add = "jitter") +
+  stat_compare_means(aes(group = AgeGroup), label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.AgeGroup.pdf"), plot = last_plot())
+
+compare_means(MCP1_pg_ml_2015_rank ~ AgeGroup, group.by = "Gender", data = AEDB.CEA, method = "kruskal.test")
+ggpubr::ggboxplot(AEDB.CEA, 
+                  x = c("AgeGroup"),
+                  y = "MCP1_pg_ml_2015_rank", 
+                  xlab = "Age groups (years) per gender",
+                  ylab = "MCP1 plaque [pg/mL]\n(inverse-rank transformation)",
+                  color = "Gender",
+                  palette = c("#D5267B", "#1290D9"),
+                  add = "jitter",
+                  ggthemne = theme_minimal()) +
+  stat_compare_means(aes(group = Gender), label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.AgeGroup_perGender.pdf"), plot = last_plot())
+```
+
+### Raw data
+
+Simalarly but now for the raw data as median ± interquartile range.
+
+```{r MCP1 per AgeGroup per Sex}
+
+# ?ggpubr::ggboxplot()
+compare_means(MCP1_pg_ml_2015 ~ AgeGroup,  data = AEDB.CEA, method = "kruskal.test")
+ggpubr::ggboxplot(AEDB.CEA, 
+                  x = c("AgeGroup"),
+                  y = "MCP1_pg_ml_2015", 
+                  xlab = "Age groups (years)",
+                  ylab = "MCP1 plaque [pg/mL]",
+                  color = "AgeGroup",
+                  palette = "npg",
+                  # add = "median_iqr")
+                  add = c("median_iqr", "jitter")) +
+  stat_compare_means(aes(group = AgeGroup), label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.raw.AgeGroup.pdf"), plot = last_plot())
+
+compare_means(MCP1_pg_ml_2015 ~ AgeGroup, group.by = "Gender", data = AEDB.CEA, method = "kruskal.test")
+ggpubr::ggboxplot(AEDB.CEA, 
+                  x = c("AgeGroup"),
+                  y = "MCP1_pg_ml_2015", 
+                  xlab = "Age groups (years) per gender",
+                  ylab = "MCP1 plaque [pg/mL]",
+                  color = "Gender",
+                  palette = c("#D5267B", "#1290D9"),
+                  # add = "median_iqr")
+                  add = c("median_iqr", "jitter")) +
+  stat_compare_means(aes(group = Gender), label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.raw.AgeGroup_perGender.pdf"), plot = last_plot())
+```
+
+
+## Hypertension & blood pressure
+We want to create figures of MCP1 levels stratified by hypertension/blood pressure, and use of anti-hypertensive drugs. 
+
+- Box and Whisker plot for MCP-1 plaque levels by hypertension group (no, yes)
+- Box and Whisker plot for MCP-1 plaque levels by systolic blood pressure group (<120, 120-139, 140-159,160+)
+
+
+```{r BloodPressure}
+library(dplyr)
+
+AEDB.CEA <- AEDB.CEA %>% mutate(SBPGroup = factor(case_when(systolic < 120 ~ "<120",
+                                                     systolic >= 120  & systolic <= 139 ~ "120-139",
+                                                     systolic >= 140  & systolic <= 159 ~ "140-159",
+                                                     systolic >= 160 ~ "160+"))) 
+
+table(AEDB.CEA$SBPGroup, AEDB.CEA$Gender)
+
+```
+
+Now we can draw some graphs of plaque MCP1 levels per sex and hypertension/blood pressure group.
+
+### Inverse-rank transformed data
+
+```{r MCP1 per BloodPressure per Sex, ranked}
+compare_means(MCP1_pg_ml_2015_rank ~ SBPGroup, data = AEDB.CEA %>% filter(!is.na(SBPGroup)), method = "kruskal.test")
+ggpubr::ggboxplot(AEDB.CEA %>% filter(!is.na(SBPGroup)), 
+                  x = c("SBPGroup"),
+                  y = "MCP1_pg_ml_2015_rank", 
+                  xlab = "Systolic blood pressure (mmHg)",
+                  ylab = "MCP1 plaque [pg/mL]\n(inverse-rank transformation)",
+                  color = "SBPGroup",
+                  palette = "npg",
+                  add = "jitter") +
+  stat_compare_means(aes(group = SBPGroup), label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.SBPGroup.pdf"), plot = last_plot())
+
+compare_means(MCP1_pg_ml_2015_rank ~ Hypertension.selfreport, data = AEDB.CEA %>% filter(!is.na(Hypertension.selfreport)), method = "kruskal.test")
+ggpubr::ggboxplot(AEDB.CEA %>% filter(!is.na(Hypertension.selfreport)), 
+                  x = c("Hypertension.selfreport"),
+                  y = "MCP1_pg_ml_2015_rank", 
+                  xlab = "Self-reported hypertension",
+                  ylab = "MCP1 plaque [pg/mL]\n(inverse-rank transformation)",
+                  color = "Hypertension.selfreport",
+                  palette = "npg",
+                  add = "jitter") +
+  stat_compare_means(aes(group = Hypertension.selfreport), label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.Hypertension.pdf"), plot = last_plot())
+
+compare_means(MCP1_pg_ml_2015_rank ~ Hypertension.drugs, data = AEDB.CEA %>% filter(!is.na(Hypertension.drugs)), method = "kruskal.test")
+ggpubr::ggboxplot(AEDB.CEA %>% filter(!is.na(Hypertension.drugs)), 
+                  x = c("Hypertension.drugs"),
+                  y = "MCP1_pg_ml_2015_rank", 
+                  xlab = "Hypertension medication use",
+                  ylab = "MCP1 plaque [pg/mL]\n(inverse-rank transformation)",
+                  color = "Hypertension.drugs",
+                  palette = "npg",
+                  add = "jitter") +
+  stat_compare_means(aes(group = Hypertension.drugs), label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.HypertensionDrugs.pdf"), plot = last_plot())
+
+
+
+compare_means(MCP1_pg_ml_2015_rank ~ SBPGroup, group.by = "Gender", data = AEDB.CEA %>% filter(!is.na(SBPGroup)), method = "kruskal.test")
+ggpubr::ggboxplot(AEDB.CEA %>% filter(!is.na(SBPGroup)), 
+                  x = c("SBPGroup"),
+                  y = "MCP1_pg_ml_2015_rank", 
+                  xlab = "Systolic blood pressure (mmHg) per gender",
+                  ylab = "MCP1 plaque [pg/mL]\n(inverse-rank transformation)",
+                  color = "Gender",
+                  palette = c("#D5267B", "#1290D9"),
+                  add = "jitter") +
+  stat_compare_means(aes(group = Gender), label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.SBPGroup_byGender.pdf"), plot = last_plot())
+
+compare_means(MCP1_pg_ml_2015_rank ~ Hypertension.selfreport, group.by = "Gender", data = AEDB.CEA %>% filter(!is.na(Hypertension.selfreport)), method = "kruskal.test")
+ggpubr::ggboxplot(AEDB.CEA %>% filter(!is.na(Hypertension.selfreport)), 
+                  x = c("Hypertension.selfreport"),
+                  y = "MCP1_pg_ml_2015_rank", 
+                  xlab = "Self-reported hypertension per gender",
+                  ylab = "MCP1 plaque [pg/mL]\n(inverse-rank transformation)",
+                  color = "Gender",
+                  palette = c("#D5267B", "#1290D9"),
+                  add = "jitter") +
+  stat_compare_means(aes(group = Gender), label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.Hypertension_byGender.pdf"), plot = last_plot())
+
+compare_means(MCP1_pg_ml_2015_rank ~ Hypertension.drugs, group.by = "Gender", data = AEDB.CEA %>% filter(!is.na(Hypertension.drugs)), method = "kruskal.test")
+ggpubr::ggboxplot(AEDB.CEA %>% filter(!is.na(Hypertension.drugs)), 
+                  x = c("Hypertension.drugs"),
+                  y = "MCP1_pg_ml_2015_rank", 
+                  xlab = "Hypertension medication use per gender",
+                  ylab = "MCP1 plaque [pg/mL]\n(inverse-rank transformation)",
+                  color = "Gender",
+                  palette = c("#D5267B", "#1290D9"),
+                  add = "jitter") +
+  stat_compare_means(aes(group = Gender), label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.Hypertension.drugs_byGender.pdf"), plot = last_plot())
+
+
+
+compare_means(MCP1_pg_ml_2015_rank ~ SBPGroup, group.by = "Hypertension.drugs", data = AEDB.CEA %>% filter(!is.na(SBPGroup) & !is.na(Hypertension.drugs)), method = "kruskal.test")
+ggpubr::ggboxplot(AEDB.CEA %>% filter(!is.na(SBPGroup) & !is.na(Hypertension.drugs)), 
+                  x = c("SBPGroup"),
+                  y = "MCP1_pg_ml_2015_rank", 
+                  xlab = "Systolic blood pressure (mmHg) by medication use",
+                  ylab = "MCP1 plaque [pg/mL]\n(inverse-rank transformation)",
+                  color = "Hypertension.drugs",
+                  palette = c("#49A01D", "#1290D9"),
+                  add = "jitter") +
+  stat_compare_means(aes(group = Hypertension.drugs), label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.SBPGroup_byHypertensionDrugs.pdf"), plot = last_plot())
+
+compare_means(MCP1_pg_ml_2015_rank ~ Hypertension.selfreport, group.by = "Hypertension.drugs", data = AEDB.CEA %>% filter(!is.na(Hypertension.selfreport) & !is.na(Hypertension.drugs)), method = "kruskal.test")
+ggpubr::ggboxplot(AEDB.CEA %>% filter(!is.na(Hypertension.selfreport) & !is.na(Hypertension.drugs)), 
+                  x = c("Hypertension.selfreport"),
+                  y = "MCP1_pg_ml_2015_rank", 
+                  xlab = "Self-reported hypertension by medication use",
+                  ylab = "MCP1 plaque [pg/mL]\n(inverse-rank transformation)",
+                  color = "Hypertension.drugs",
+                  palette = c("#49A01D", "#1290D9"),
+                  add = "jitter") +
+  stat_compare_means(aes(group = Hypertension.drugs), label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.Hypertension.selfreport_byHypertensionDrugs.pdf"), plot = last_plot())
+
+
+```
+
+
+### Raw data
+
+Simalarly but now for the raw data as median ± interquartile range.
+
+
+```{r MCP1 per BloodPressure per Sex}
+compare_means(MCP1_pg_ml_2015 ~ SBPGroup, data = AEDB.CEA %>% filter(!is.na(SBPGroup)), method = "kruskal.test")
+ggpubr::ggboxplot(AEDB.CEA %>% filter(!is.na(SBPGroup)), 
+                  x = c("SBPGroup"),
+                  y = "MCP1_pg_ml_2015", 
+                  xlab = "Systolic blood pressure (mmHg)",
+                  ylab = "MCP1 plaque [pg/mL]",
+                  color = "SBPGroup",
+                  palette = "npg",
+                  add = "jitter") +
+  stat_compare_means(aes(group = SBPGroup), label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.raw.SBPGroup.pdf"), plot = last_plot())
+
+compare_means(MCP1_pg_ml_2015 ~ Hypertension.selfreport, data = AEDB.CEA %>% filter(!is.na(Hypertension.selfreport)), method = "kruskal.test")
+ggpubr::ggboxplot(AEDB.CEA %>% filter(!is.na(Hypertension.selfreport)), 
+                  x = c("Hypertension.selfreport"),
+                  y = "MCP1_pg_ml_2015", 
+                  xlab = "Self-reported hypertension",
+                  ylab = "MCP1 plaque [pg/mL]",
+                  color = "Hypertension.selfreport",
+                  palette = "npg",
+                  add = "jitter") +
+  stat_compare_means(aes(group = Hypertension.selfreport), label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.raw.Hypertension.pdf"), plot = last_plot())
+
+compare_means(MCP1_pg_ml_2015 ~ Hypertension.drugs, data = AEDB.CEA %>% filter(!is.na(Hypertension.drugs)), method = "kruskal.test")
+ggpubr::ggboxplot(AEDB.CEA %>% filter(!is.na(Hypertension.drugs)), 
+                  x = c("Hypertension.drugs"),
+                  y = "MCP1_pg_ml_2015", 
+                  xlab = "Hypertension medication use",
+                  ylab = "MCP1 plaque [pg/mL]",
+                  color = "Hypertension.drugs",
+                  palette = "npg",
+                  add = "jitter") +
+  stat_compare_means(aes(group = Hypertension.drugs), label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.raw.HypertensionDrugs.pdf"), plot = last_plot())
+
+
+
+compare_means(MCP1_pg_ml_2015 ~ SBPGroup, group.by = "Gender", data = AEDB.CEA %>% filter(!is.na(SBPGroup)), method = "kruskal.test")
+ggpubr::ggboxplot(AEDB.CEA %>% filter(!is.na(SBPGroup)), 
+                  x = c("SBPGroup"),
+                  y = "MCP1_pg_ml_2015", 
+                  xlab = "Systolic blood pressure (mmHg) per gender",
+                  ylab = "MCP1 plaque [pg/mL]",
+                  color = "Gender",
+                  palette = c("#D5267B", "#1290D9"),
+                  add = "jitter") +
+  stat_compare_means(aes(group = Gender), label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.raw.SBPGroup_byGender.pdf"), plot = last_plot())
+
+compare_means(MCP1_pg_ml_2015 ~ Hypertension.selfreport, group.by = "Gender", data = AEDB.CEA %>% filter(!is.na(Hypertension.selfreport)), method = "kruskal.test")
+ggpubr::ggboxplot(AEDB.CEA %>% filter(!is.na(Hypertension.selfreport)), 
+                  x = c("Hypertension.selfreport"),
+                  y = "MCP1_pg_ml_2015", 
+                  xlab = "Self-reported hypertension per gender",
+                  ylab = "MCP1 plaque [pg/mL]",
+                  color = "Gender",
+                  palette = c("#D5267B", "#1290D9"),
+                  add = "jitter") +
+  stat_compare_means(aes(group = Gender), label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.raw.Hypertension_byGender.pdf"), plot = last_plot())
+
+compare_means(MCP1_pg_ml_2015 ~ Hypertension.drugs, group.by = "Gender", data = AEDB.CEA %>% filter(!is.na(Hypertension.drugs)), method = "kruskal.test")
+ggpubr::ggboxplot(AEDB.CEA %>% filter(!is.na(Hypertension.drugs)), 
+                  x = c("Hypertension.drugs"),
+                  y = "MCP1_pg_ml_2015", 
+                  xlab = "Hypertension medication use per gender",
+                  ylab = "MCP1 plaque [pg/mL]",
+                  color = "Gender",
+                  palette = c("#D5267B", "#1290D9"),
+                  add = "jitter") +
+  stat_compare_means(aes(group = Gender), label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.raw.Hypertension.drugs_byGender.pdf"), plot = last_plot())
+
+
+
+compare_means(MCP1_pg_ml_2015 ~ SBPGroup, group.by = "Hypertension.drugs", data = AEDB.CEA %>% filter(!is.na(SBPGroup) & !is.na(Hypertension.drugs)), method = "kruskal.test")
+ggpubr::ggboxplot(AEDB.CEA %>% filter(!is.na(SBPGroup) & !is.na(Hypertension.drugs)), 
+                  x = c("SBPGroup"),
+                  y = "MCP1_pg_ml_2015", 
+                  xlab = "Systolic blood pressure (mmHg) by medication use",
+                  ylab = "MCP1 plaque [pg/mL]",
+                  color = "Hypertension.drugs",
+                  palette = c("#49A01D", "#1290D9"),
+                  add = "jitter") +
+  stat_compare_means(aes(group = Hypertension.drugs), label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.raw.SBPGroup_byHypertensionDrugs.pdf"), plot = last_plot())
+
+compare_means(MCP1_pg_ml_2015 ~ Hypertension.selfreport, group.by = "Hypertension.drugs", data = AEDB.CEA %>% filter(!is.na(Hypertension.selfreport) & !is.na(Hypertension.drugs)), method = "kruskal.test")
+ggpubr::ggboxplot(AEDB.CEA %>% filter(!is.na(Hypertension.selfreport) & !is.na(Hypertension.drugs)), 
+                  x = c("Hypertension.selfreport"),
+                  y = "MCP1_pg_ml_2015", 
+                  xlab = "Self-reported hypertension per medication use",
+                  ylab = "MCP1 plaque [pg/mL]",
+                  color = "Hypertension.drugs",
+                  palette = c("#49A01D", "#1290D9"),
+                  add = "jitter") +
+  stat_compare_means(aes(group = Hypertension.drugs), label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.raw.Hypertension.selfreport_byHypertensionDrugs.pdf"), plot = last_plot())
+
+
+
+
+```
+
+
+## Hypercholesterolemia & LDL levels
+We want to create figures of MCP1 levels stratified by hypercholesterolemia/LDL-levels, and use of lipid-lowering drugs. 
+
+- Box and Whisker plot for MCP-1 plaque levels by hypercholesterolemia (`risk614`) group (no, yes)
+- Box and Whisker plot for MCP-1 plaque levels by lipid-lowering drugs group (no, yes)
+- Box and Whisker plot for MCP-1 plaque levels by LDL-levels (mmol/L) group (<100, 100-129, 130-159, 160-189, 190+)
+
+```{r LDLGroups}
+library(dplyr)
+
+AEDB.CEA <- AEDB.CEA %>% mutate(LDLGroup = factor(case_when(LDL_finalCU < 100 ~ "<100",
+                                                     LDL_finalCU >= 100  & LDL_finalCU <= 129 ~ "100-129",
+                                                     LDL_finalCU >= 130  & LDL_finalCU <= 159 ~ "130-159",
+                                                     LDL_finalCU >= 160  & LDL_finalCU <= 189 ~ "160-189",
+                                                     LDL_finalCU >= 190 ~ "190+"))) 
+
+
+table(AEDB.CEA$LDLGroup, AEDB.CEA$Gender)
+
+```
+
+
+```{r Fix Hypercholesterolemia, message=FALSE, warning=FALSE}
+require(sjlabelled)
+AEDB.CEA$risk614 <- to_factor(AEDB.CEA$risk614)
+
+# Fix plaquephenotypes
+attach(AEDB.CEA)
+AEDB.CEA[,"Hypercholesterolemia"] <- NA
+AEDB.CEA$Hypercholesterolemia[risk614 == "missing value"] <- NA
+AEDB.CEA$Hypercholesterolemia[risk614 == -999] <- NA
+AEDB.CEA$Hypercholesterolemia[risk614 == "no"] <- "no"
+AEDB.CEA$Hypercholesterolemia[risk614 == "yes"] <- "yes"
+detach(AEDB.CEA)
+
+table(AEDB.CEA$risk614, AEDB.CEA$Hypercholesterolemia)
+
+# AEDB.temp <- subset(AEDB,  select = c("STUDY_NUMBER", "UPID", "Age", "Gender", "Hospital", "Artery_summary", "risk614", "Hypercholesterolemia"))
+# require(labelled)
+# AEDB.temp$Gender <- to_factor(AEDB.temp$Gender)
+# AEDB.temp$Hospital <- to_factor(AEDB.temp$Hospital)
+# AEDB.temp$Artery_summary <- to_factor(AEDB.temp$Artery_summary)
+# 
+# DT::datatable(AEDB.temp[1:10,], caption = "Excerpt of the whole AEDB.", rownames = FALSE)
+# 
+# rm(AEDB.temp)
+
+```
+
+Now we can draw some graphs of plaque MCP1 levels per sex and hypercholesterolemia/LDL-levels group, as well as stratified by lipid-lowering drugs users.
+
+### Inverse-rank transformed data
+
+```{r MCP1 per Hypercholesterolemia per Sex, ranked}
+compare_means(MCP1_pg_ml_2015_rank ~ LDLGroup, data = AEDB.CEA %>% filter(!is.na(LDLGroup)), method = "kruskal.test")
+ggpubr::ggboxplot(AEDB.CEA %>% filter(!is.na(LDLGroup)), 
+                  x = c("LDLGroup"),
+                  y = "MCP1_pg_ml_2015_rank", 
+                  xlab = "LDL (mg/dL) per gender",
+                  ylab = "MCP1 plaque [pg/mL]\n(inverse-rank transformation)",
+                  color = "LDLGroup",
+                  palette = "npg",
+                  add = "jitter") +
+  stat_compare_means(label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.LDLGroups.pdf"), plot = last_plot())
+
+compare_means(MCP1_pg_ml_2015_rank ~ LDLGroup, group.by = "Gender", data = AEDB.CEA %>% filter(!is.na(LDLGroup)), method = "kruskal.test")
+ggpubr::ggboxplot(AEDB.CEA %>% filter(!is.na(LDLGroup)), 
+                  x = c("LDLGroup"),
+                  y = "MCP1_pg_ml_2015_rank", 
+                  xlab = "LDL (mg/dL) per gender",
+                  ylab = "MCP1 plaque [pg/mL]\n(inverse-rank transformation)",
+                  color = "Gender",
+                  palette = c("#D5267B", "#1290D9"),
+                  add = "jitter") +
+  stat_compare_means(aes(group = Gender), label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.LDLGroups_byGender.pdf"), plot = last_plot())
+
+
+
+compare_means(MCP1_pg_ml_2015_rank ~ Hypercholesterolemia, data = AEDB.CEA %>% filter(!is.na(Hypercholesterolemia)), method = "kruskal.test")
+ggpubr::ggboxplot(AEDB.CEA %>% filter(!is.na(Hypercholesterolemia)), 
+                  x = c("Hypercholesterolemia"),
+                  y = "MCP1_pg_ml_2015_rank", 
+                  xlab = "Diagnosed hypercholesterolemia",
+                  ylab = "MCP1 plaque [pg/mL]\n(inverse-rank transformation)",
+                  color = "Hypercholesterolemia",
+                  palette = "npg",
+                  add = "jitter") +
+  stat_compare_means(label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.Hypercholesterolemia.pdf"), plot = last_plot())
+
+compare_means(MCP1_pg_ml_2015_rank ~ Hypercholesterolemia, group.by = "Gender", data = AEDB.CEA %>% filter(!is.na(Hypercholesterolemia)), method = "kruskal.test")
+ggpubr::ggboxplot(AEDB.CEA %>% filter(!is.na(Hypercholesterolemia)), 
+                  x = c("Hypercholesterolemia"),
+                  y = "MCP1_pg_ml_2015_rank", 
+                  xlab = "Diagnosed hypercholesterolemia per gender",
+                  ylab = "MCP1 plaque [pg/mL]\n(inverse-rank transformation)",
+                  color = "Gender",
+                  palette = c("#D5267B", "#1290D9"),
+                  add = "jitter") +
+  stat_compare_means(aes(group = Gender), label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.Hypercholesterolemia_byGender.pdf"), plot = last_plot())
+
+
+compare_means(MCP1_pg_ml_2015_rank ~ Med.Statin.LLD, data = AEDB.CEA %>% filter(!is.na(Med.Statin.LLD)), method = "kruskal.test")
+ggpubr::ggboxplot(AEDB.CEA %>% filter(!is.na(Med.Statin.LLD)), 
+                  x = c("Med.Statin.LLD"),
+                  y = "MCP1_pg_ml_2015_rank", 
+                  xlab = "Lipid-lowering drug use",
+                  ylab = "MCP1 plaque [pg/mL]\n(inverse-rank transformation)",
+                  color = "Med.Statin.LLD",
+                  palette = "npg",
+                  add = "jitter") +
+  stat_compare_means(label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.Med.Statin.LLD.pdf"), plot = last_plot())
+
+compare_means(MCP1_pg_ml_2015_rank ~ Med.Statin.LLD, group.by = "Gender", data = AEDB.CEA %>% filter(!is.na(Med.Statin.LLD)), method = "kruskal.test")
+ggpubr::ggboxplot(AEDB.CEA %>% filter(!is.na(Med.Statin.LLD)), 
+                  x = c("Med.Statin.LLD"),
+                  y = "MCP1_pg_ml_2015_rank", 
+                  xlab = "Lipid-lowering drug use per gender",
+                  ylab = "MCP1 plaque [pg/mL]\n(inverse-rank transformation)",
+                  color = "Gender",
+                  palette = c("#D5267B", "#1290D9"),
+                  add = "jitter") +
+  stat_compare_means(aes(group = Gender), label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.Med.Statin.LLD_byGender.pdf"), plot = last_plot())
+
+
+
+
+compare_means(MCP1_pg_ml_2015_rank ~ LDLGroup, group.by = "Med.Statin.LLD", data = AEDB.CEA %>% filter(!is.na(LDLGroup) & !is.na(Med.Statin.LLD)), method = "kruskal.test")
+ggpubr::ggboxplot(AEDB.CEA %>% filter(!is.na(LDLGroup) & !is.na(Med.Statin.LLD)), 
+                  x = c("LDLGroup"),
+                  y = "MCP1_pg_ml_2015_rank", 
+                  xlab = "LDL (mg/dL) per LLD use",
+                  ylab = "MCP1 plaque [pg/mL]\n(inverse-rank transformation)",
+                  color = "Med.Statin.LLD",
+                  palette = c("#49A01D", "#1290D9"),
+                  add = "jitter") +
+  stat_compare_means(aes(group = Med.Statin.LLD), label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.LDLGroups_byMed.Statin.LLD.pdf"), plot = last_plot())
+
+compare_means(MCP1_pg_ml_2015_rank ~ Hypercholesterolemia, group.by = "Med.Statin.LLD", data = AEDB.CEA %>% filter(!is.na(Hypercholesterolemia) & !is.na(Med.Statin.LLD)), method = "kruskal.test")
+ggpubr::ggboxplot(AEDB.CEA %>% filter(!is.na(Hypercholesterolemia) & !is.na(Med.Statin.LLD)), 
+                  x = c("Hypercholesterolemia"),
+                  y = "MCP1_pg_ml_2015_rank", 
+                  xlab = "Diagnosed hypercholesterolemia per LLD use",
+                  ylab = "MCP1 plaque [pg/mL]\n(inverse-rank transformation)",
+                  color = "Med.Statin.LLD",
+                  palette = c("#49A01D", "#1290D9"),
+                  add = "jitter") +
+  stat_compare_means(aes(group = Med.Statin.LLD), label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.LDLGroups_byMed.Statin.LLD.pdf"), plot = last_plot())
+
+
+```
+
+
+### Raw data
+
+Simalarly but now for the raw data as median ± interquartile range.
+
+```{r MCP1 per Hypercholesterolemia per Sex}
+
+compare_means(MCP1_pg_ml_2015 ~ LDLGroup, data = AEDB.CEA %>% filter(!is.na(LDLGroup)), method = "kruskal.test")
+ggpubr::ggboxplot(AEDB.CEA %>% filter(!is.na(LDLGroup)), 
+                  x = c("LDLGroup"),
+                  y = "MCP1_pg_ml_2015", 
+                  xlab = "LDL (mg/dL) per gender",
+                  ylab = "MCP1 plaque [pg/mL])",
+                  color = "LDLGroup",
+                  palette = "npg",
+                  add = "jitter") +
+  stat_compare_means(label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.raw.LDLGroups.pdf"), plot = last_plot())
+
+compare_means(MCP1_pg_ml_2015 ~ LDLGroup, group.by = "Gender", data = AEDB.CEA %>% filter(!is.na(LDLGroup)), method = "kruskal.test")
+ggpubr::ggboxplot(AEDB.CEA %>% filter(!is.na(LDLGroup)), 
+                  x = c("LDLGroup"),
+                  y = "MCP1_pg_ml_2015", 
+                  xlab = "LDL (mg/dL) per gender",
+                  ylab = "MCP1 plaque [pg/mL])",
+                  color = "Gender",
+                  palette = c("#D5267B", "#1290D9"),
+                  add = "jitter") +
+  stat_compare_means(aes(group = Gender), label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.raw.LDLGroups_byGender.pdf"), plot = last_plot())
+
+
+
+compare_means(MCP1_pg_ml_2015 ~ Hypercholesterolemia, data = AEDB.CEA %>% filter(!is.na(Hypercholesterolemia)), method = "kruskal.test")
+ggpubr::ggboxplot(AEDB.CEA %>% filter(!is.na(Hypercholesterolemia)), 
+                  x = c("Hypercholesterolemia"),
+                  y = "MCP1_pg_ml_2015", 
+                  xlab = "Diagnosed hypercholesterolemia",
+                  ylab = "MCP1 plaque [pg/mL])",
+                  color = "Hypercholesterolemia",
+                  palette = "npg",
+                  add = "jitter") +
+  stat_compare_means(label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.raw.Hypercholesterolemia.pdf"), plot = last_plot())
+
+compare_means(MCP1_pg_ml_2015 ~ Hypercholesterolemia, group.by = "Gender", data = AEDB.CEA %>% filter(!is.na(Hypercholesterolemia)), method = "kruskal.test")
+ggpubr::ggboxplot(AEDB.CEA %>% filter(!is.na(Hypercholesterolemia)), 
+                  x = c("Hypercholesterolemia"),
+                  y = "MCP1_pg_ml_2015", 
+                  xlab = "Diagnosed hypercholesterolemia per gender",
+                  ylab = "MCP1 plaque [pg/mL])",
+                  color = "Gender",
+                  palette = c("#D5267B", "#1290D9"),
+                  add = "jitter") +
+  stat_compare_means(aes(group = Gender), label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.raw.Hypercholesterolemia_byGender.pdf"), plot = last_plot())
+
+
+compare_means(MCP1_pg_ml_2015 ~ Med.Statin.LLD, data = AEDB.CEA %>% filter(!is.na(Med.Statin.LLD)), method = "kruskal.test")
+ggpubr::ggboxplot(AEDB.CEA %>% filter(!is.na(Med.Statin.LLD)), 
+                  x = c("Med.Statin.LLD"),
+                  y = "MCP1_pg_ml_2015", 
+                  xlab = "Lipid-lowering drug use",
+                  ylab = "MCP1 plaque [pg/mL])",
+                  color = "Med.Statin.LLD",
+                  palette = "npg",
+                  add = "jitter") +
+  stat_compare_means(label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.raw.Med.Statin.LLD.pdf"), plot = last_plot())
+
+compare_means(MCP1_pg_ml_2015 ~ Med.Statin.LLD, group.by = "Gender", data = AEDB.CEA %>% filter(!is.na(Med.Statin.LLD)), method = "kruskal.test")
+ggpubr::ggboxplot(AEDB.CEA %>% filter(!is.na(Med.Statin.LLD)), 
+                  x = c("Med.Statin.LLD"),
+                  y = "MCP1_pg_ml_2015", 
+                  xlab = "Lipid-lowering drug use per gender",
+                  ylab = "MCP1 plaque [pg/mL])",
+                  color = "Gender",
+                  palette = c("#D5267B", "#1290D9"),
+                  add = "jitter") +
+  stat_compare_means(aes(group = Gender), label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.raw.Med.Statin.LLD_byGender.pdf"), plot = last_plot())
+
+
+
+
+compare_means(MCP1_pg_ml_2015 ~ LDLGroup, group.by = "Med.Statin.LLD", data = AEDB.CEA %>% filter(!is.na(LDLGroup) & !is.na(Med.Statin.LLD)), method = "kruskal.test")
+ggpubr::ggboxplot(AEDB.CEA %>% filter(!is.na(LDLGroup) & !is.na(Med.Statin.LLD)), 
+                  x = c("LDLGroup"),
+                  y = "MCP1_pg_ml_2015", 
+                  xlab = "LDL (mg/dL) per LLD use",
+                  ylab = "MCP1 plaque [pg/mL])",
+                  color = "Med.Statin.LLD",
+                  palette = c("#49A01D", "#1290D9"),
+                  add = "jitter") +
+  stat_compare_means(aes(group = Med.Statin.LLD), label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.raw.LDLGroups_byMed.Statin.LLD.pdf"), plot = last_plot())
+
+compare_means(MCP1_pg_ml_2015 ~ Hypercholesterolemia, group.by = "Med.Statin.LLD", data = AEDB.CEA %>% filter(!is.na(Hypercholesterolemia) & !is.na(Med.Statin.LLD)), method = "kruskal.test")
+ggpubr::ggboxplot(AEDB.CEA %>% filter(!is.na(Hypercholesterolemia) & !is.na(Med.Statin.LLD)), 
+                  x = c("Hypercholesterolemia"),
+                  y = "MCP1_pg_ml_2015", 
+                  xlab = "Diagnosed hypercholesterolemia per LLD use",
+                  ylab = "MCP1 plaque [pg/mL])",
+                  color = "Med.Statin.LLD",
+                  palette = c("#49A01D", "#1290D9"),
+                  add = "jitter") +
+  stat_compare_means(aes(group = Med.Statin.LLD), label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.raw.LDLGroups_byMed.Statin.LLD.pdf"), plot = last_plot())
+
+```
+
+
+
+## Kidney function (eGFR)
+We want to create figures of MCP1 levels stratified by kidney function. 
+
+- Box and Whisker plot for MCP-1 plaque levels by chronic kidney disease (CKD) group (1, 2, 3, 4, 5)
+- Box and Whisker plot for MCP-1 plaque levels by eGFR (MDRD-based) group (90+, 60-89, 30-59, <30)
+
+```{r EGFR}
+library(dplyr)
+
+AEDB.CEA <- AEDB.CEA %>% mutate(eGFRGroup = factor(case_when(GFR_MDRD < 15 ~ "<15",
+                                                             GFR_MDRD >= 15  & GFR_MDRD <= 29 ~ "15-29",
+                                                             GFR_MDRD >= 30  & GFR_MDRD <= 59 ~ "30-59",
+                                                             GFR_MDRD >= 60  & GFR_MDRD <= 89 ~ "60-89",
+                                                             GFR_MDRD >= 90 ~ "90+")))
+
+table(AEDB.CEA$eGFRGroup, AEDB.CEA$Gender)
+
+table(AEDB.CEA$eGFRGroup, AEDB.CEA$KDOQI)
+
+```
+
+Now we can draw some graphs of plaque MCP1 levels per sex and kidney function group.
+
+### Inverse-rank transformed data
+
+
+```{r MCP1 per EGFR per Sex, ranked}
+
+# Global test
+compare_means(MCP1_pg_ml_2015_rank ~ eGFRGroup, data = AEDB.CEA %>% filter(!is.na(eGFRGroup)), method = "kruskal.test")
+ggpubr::ggboxplot(AEDB.CEA %>% filter(!is.na(eGFRGroup)), 
+                  x = c("eGFRGroup"),
+                  y = "MCP1_pg_ml_2015_rank", 
+                  xlab = "eGFR (mL/min per 1.73 m2)",
+                  ylab = "MCP1 plaque [pg/mL]\n(inverse-rank transformation)",
+                  color = "eGFRGroup",
+                  palette = "npg",
+                  add = "jitter") +
+  stat_compare_means(method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.EGFR.pdf"), plot = last_plot())
+
+compare_means(MCP1_pg_ml_2015_rank ~ eGFRGroup, group.by = "Gender", data = AEDB.CEA %>% filter(!is.na(eGFRGroup)), method = "kruskal.test")
+ggpubr::ggboxplot(AEDB.CEA %>% filter(!is.na(eGFRGroup)), 
+                  x = c("eGFRGroup"),
+                  y = "MCP1_pg_ml_2015_rank", 
+                  xlab = "eGFR (mL/min per 1.73 m2) per gender",
+                  ylab = "MCP1 plaque [pg/mL]\n(inverse-rank transformation)",
+                  color = "Gender",
+                  palette = c("#D5267B", "#1290D9"),
+                  add = "jitter") +
+  stat_compare_means(aes(group = Gender), label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.EGFR_byGender.pdf"), plot = last_plot())
+
+compare_means(MCP1_pg_ml_2015_rank ~ KDOQI, data = AEDB.CEA %>% filter(!is.na(KDOQI)), method = "kruskal.test")
+p1 <- ggpubr::ggboxplot(AEDB.CEA %>% filter(!is.na(KDOQI)), 
+                  x = c("KDOQI"),
+                  y = "MCP1_pg_ml_2015_rank", 
+                  xlab = "Kidney function (KDOQI)",
+                  ylab = "MCP1 plaque [pg/mL]\n(inverse-rank transformation)",
+                  color = "KDOQI",
+                  palette = "npg",
+                  add = "jitter") +
+  stat_compare_means(aes(group = KDOQI), label = "p.format", method = "kruskal.test")
+ggpar(p1 + rotate_x_text(45), legend = "right") 
+rm(p1)
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.KDOQI.pdf"), plot = last_plot())
+
+compare_means(MCP1_pg_ml_2015_rank ~ KDOQI, group.by = "Gender",  data = AEDB.CEA %>% filter(!is.na(KDOQI)), method = "kruskal.test")
+p1 <- ggpubr::ggboxplot(AEDB.CEA %>% filter(!is.na(KDOQI)), 
+                  x = c("KDOQI"),
+                  y = "MCP1_pg_ml_2015_rank", 
+                  xlab = "Kidney function (KDOQI) per gender",
+                  ylab = "MCP1 plaque [pg/mL]\n(inverse-rank transformation)",
+                  color = "Gender",
+                  palette = c("#D5267B", "#1290D9"),
+                  add = "jitter") +
+  stat_compare_means(aes(group = Gender), label = "p.format", method = "kruskal.test")
+ggpar(p1 + rotate_x_text(45), legend = "right") 
+rm(p1)
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.KDOQI_byGender.pdf"), plot = last_plot())
+
+compare_means(MCP1_pg_ml_2015_rank ~ eGFRGroup, data = AEDB.CEA %>% filter(!is.na(eGFRGroup) & !is.na(KDOQI)), method = "kruskal.test")
+p1 <- ggpubr::ggboxplot(AEDB.CEA %>% filter(!is.na(eGFRGroup) & !is.na(KDOQI)), 
+                  x = c("eGFRGroup"),
+                  y = "MCP1_pg_ml_2015_rank", 
+                  xlab = "eGFR (mL/min per 1.73 m2) by KDOQI group",
+                  ylab = "MCP1 plaque [pg/mL]\n(inverse-rank transformation)",
+                  color = "KDOQI",
+                  palette = "npg",
+                  add = "jitter") +
+  stat_compare_means(method = "kruskal.test")
+ggpar(p1, legend = "right")
+rm(p1)
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.EGFR_KDOQI.pdf"), plot = last_plot())
+
+```
+
+
+### Raw data
+
+Simalarly but now for the raw data as median ± interquartile range.
+
+
+```{r MCP1 per EGFR per Sex}
+
+# Global test
+
+compare_means(MCP1_pg_ml_2015 ~ eGFRGroup, data = AEDB.CEA %>% filter(!is.na(eGFRGroup)), method = "kruskal.test")
+ggpubr::ggboxplot(AEDB.CEA %>% filter(!is.na(eGFRGroup)), 
+                  x = c("eGFRGroup"),
+                  y = "MCP1_pg_ml_2015", 
+                  xlab = "eGFR (mL/min per 1.73 m2)",
+                  ylab = "MCP1 plaque [pg/mL]",
+                  color = "eGFRGroup",
+                  palette = "npg",
+                  add = "jitter") +
+  stat_compare_means(method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.raw.EGFR.pdf"), plot = last_plot())
+
+compare_means(MCP1_pg_ml_2015 ~ eGFRGroup, group.by = "Gender",  data = AEDB.CEA %>% filter(!is.na(eGFRGroup)), method = "kruskal.test")
+ggpubr::ggboxplot(AEDB.CEA %>% filter(!is.na(eGFRGroup)), 
+                  x = c("eGFRGroup"),
+                  y = "MCP1_pg_ml_2015", 
+                  xlab = "eGFR (mL/min per 1.73 m2) per gender",
+                  ylab = "MCP1 plaque [pg/mL]",
+                  color = "Gender",
+                  palette = c("#D5267B", "#1290D9"),
+                  add = "jitter") +
+  stat_compare_means(aes(group = Gender), label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.raw.EGFR_byGender.pdf"), plot = last_plot())
+
+compare_means(MCP1_pg_ml_2015 ~ KDOQI, data = AEDB.CEA %>% filter(!is.na(KDOQI)), method = "kruskal.test")
+p1 <- ggpubr::ggboxplot(AEDB.CEA %>% filter(!is.na(KDOQI)), 
+                  x = c("KDOQI"),
+                  y = "MCP1_pg_ml_2015", 
+                  xlab = "Kidney function (KDOQI)",
+                  ylab = "MCP1 plaque [pg/mL]",
+                  color = "KDOQI",
+                  palette = "npg",
+                  add = "jitter") +
+  stat_compare_means(aes(group = KDOQI), label = "p.format", method = "kruskal.test")
+ggpar(p1 + rotate_x_text(45), legend = "right") 
+rm(p1)
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.raw.KDOQI.pdf"), plot = last_plot())
+
+compare_means(MCP1_pg_ml_2015 ~ KDOQI, group.by = "Gender",   data = AEDB.CEA %>% filter(!is.na(KDOQI)), method = "kruskal.test")
+p1 <- ggpubr::ggboxplot(AEDB.CEA %>% filter(!is.na(KDOQI)), 
+                  x = c("KDOQI"),
+                  y = "MCP1_pg_ml_2015", 
+                  xlab = "Kidney function (KDOQI) per gender",
+                  ylab = "MCP1 plaque [pg/mL]",
+                  color = "Gender",
+                  palette = c("#D5267B", "#1290D9"),
+                  add = "jitter") +
+  stat_compare_means(aes(group = Gender), label = "p.format", method = "kruskal.test")
+ggpar(p1 + rotate_x_text(45), legend = "right") 
+rm(p1)
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.raw.KDOQI_byGender.pdf"), plot = last_plot())
+
+compare_means(MCP1_pg_ml_2015 ~ eGFRGroup,  data = AEDB.CEA %>% filter(!is.na(eGFRGroup) & !is.na(KDOQI)), method = "kruskal.test")
+p1 <- ggpubr::ggboxplot(AEDB.CEA %>% filter(!is.na(eGFRGroup) & !is.na(KDOQI)), 
+                  x = c("eGFRGroup"),
+                  y = "MCP1_pg_ml_2015", 
+                  xlab = "eGFR (mL/min per 1.73 m2) by KDOQI group",
+                  ylab = "MCP1 plaque [pg/mL]",
+                  color = "KDOQI",
+                  palette = "npg",
+                  add = "jitter") +
+  stat_compare_means(method = "kruskal.test")
+ggpar(p1, legend = "right")
+rm(p1)
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.raw.EGFR_KDOQI.pdf"), plot = last_plot())
+
+```
+
+
+
+## BMI
+We want to create figures of MCP1 levels stratified by BMI. 
+
+- Box and Whisker plot for MCP-1 plaque levels by BMI WHO group (underweight, normal, overweight, obese)
+- Box and Whisker plot for MCP-1 plaque levels by BMI group (<18.5, 18.5-24.9, 25, 29.9, 30-24.9, 35+)
+
+```{r BMI}
+library(dplyr)
+
+AEDB.CEA <- AEDB.CEA %>% mutate(BMIGroup = factor(case_when(BMI < 18.5 ~ "<18.5",
+                                                     BMI >= 18.5  & BMI < 25 ~ "18.5-24",
+                                                     BMI >= 25  & BMI < 30 ~ "25-29",
+                                                     BMI >= 30  & BMI < 35 ~ "30-35",
+                                                     BMI >= 35 ~ "35+"))) 
+
+# require(labelled)
+# AEDB.CEA$BMI_US <- as_factor(AEDB.CEA$BMI_US)
+# AEDB.CEA$BMI_WHO <- as_factor(AEDB.CEA$BMI_WHO)
+# table(AEDB.CEA$BMI_WHO, AEDB.CEA$BMI_US)
+
+table(AEDB.CEA$BMIGroup, AEDB.CEA$Gender)
+table(AEDB.CEA$BMIGroup, AEDB.CEA$BMI_WHO)
+
+```
+
+Now we can draw some graphs of plaque MCP1 levels per sex and age group.
+
+### Inverse-rank transformed data
+
+#### MCP1 plaque levels
+
+```{r MCP1 per BMI per Sex, ranked}
+
+# Global test
+compare_means(MCP1_pg_ml_2015_rank ~ BMIGroup,  data = AEDB.CEA %>% filter(!is.na(BMIGroup)), method = "kruskal.test")
+ggpubr::ggboxplot(AEDB.CEA %>% filter(!is.na(BMIGroup)), 
+                  x = c("BMIGroup"),
+                  y = "MCP1_pg_ml_2015_rank", 
+                  xlab = "BMI groups (kg/m2)",
+                  ylab = "MCP1 plaque [pg/mL]\n(inverse-rank transformation)",
+                  # color = "Gender",
+                  # palette = c("#D5267B", "#1290D9"),
+                  color = "BMIGroup",
+                  palette = "npg",
+                  add = "jitter") +
+  stat_compare_means(method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.BMI.pdf"), plot = last_plot())
+
+compare_means(MCP1_pg_ml_2015_rank ~ BMIGroup, group.by = "Gender", data = AEDB.CEA %>% filter(!is.na(BMIGroup)), method = "kruskal.test")
+ggpubr::ggboxplot(AEDB.CEA %>% filter(!is.na(BMIGroup)), 
+                  x = c("BMIGroup"),
+                  y = "MCP1_pg_ml_2015_rank", 
+                  xlab = "BMI groups (kg/m2) per gender",
+                  ylab = "MCP1 plaque [pg/mL]\n(inverse-rank transformation)",
+                  color = "Gender",
+                  palette = c("#D5267B", "#1290D9"),
+                  add = "jitter") +
+  stat_compare_means(aes(group = Gender), label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.BMI_byGender.pdf"), plot = last_plot())
+
+compare_means(MCP1_pg_ml_2015_rank ~ BMIGroup, data = AEDB.CEA %>% filter(!is.na(BMIGroup) & !is.na(BMI_WHO)), method = "kruskal.test")
+p1 <- ggpubr::ggboxplot(AEDB.CEA %>% filter(!is.na(BMIGroup) & !is.na(BMI_WHO)), 
+                  x = c("BMIGroup"),
+                  y = "MCP1_pg_ml_2015_rank", 
+                  xlab = "BMI groups (kg/m2) per WHO categories",
+                  ylab = "MCP1 plaque [pg/mL]\n(inverse-rank transformation)",
+                  color = "BMI_WHO",
+                  palette = "npg",
+                  add = "jitter") +
+  stat_compare_means(method = "kruskal.test")
+ggpar(p1, legend = "right")
+rm(p1)
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.BMI_byWHO.pdf"), plot = last_plot())
+
+```
+
+
+### Raw data
+
+Simalarly but now for the raw data as median ± interquartile range.
+
+
+```{r MCP1 per BMI per Sex}
+
+# Global test
+compare_means(MCP1_pg_ml_2015 ~ BMIGroup,  data = AEDB.CEA %>% filter(!is.na(BMIGroup)), method = "kruskal.test")
+ggpubr::ggboxplot(AEDB.CEA %>% filter(!is.na(BMIGroup)), 
+                  x = c("BMIGroup"),
+                  y = "MCP1_pg_ml_2015", 
+                  xlab = "BMI groups (kg/m2)",
+                  ylab = "MCP1 plaque [pg/mL]",
+                  # color = "Gender",
+                  # palette = c("#D5267B", "#1290D9"),
+                  color = "BMIGroup",
+                  palette = "npg",
+                  add = "jitter") +
+  stat_compare_means(label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.raw.BMI.pdf"), plot = last_plot())
+
+compare_means(MCP1_pg_ml_2015 ~ BMIGroup, group.by = "Gender", data = AEDB.CEA %>% filter(!is.na(BMIGroup)), method = "kruskal.test")
+ggpubr::ggboxplot(AEDB.CEA %>% filter(!is.na(BMIGroup)), 
+                  x = c("BMIGroup"),
+                  y = "MCP1_pg_ml_2015", 
+                  xlab = "BMI groups (kg/m2) per gender",
+                  ylab = "MCP1 plaque [pg/mL]",
+                  color = "Gender",
+                  palette = c("#D5267B", "#1290D9"),
+                  add = "jitter") +
+  stat_compare_means(aes(group = Gender), label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.raw.BMI_byGender.pdf"), plot = last_plot())
+
+compare_means(MCP1_pg_ml_2015 ~ BMIGroup,  data = AEDB.CEA %>% filter(!is.na(BMIGroup) & !is.na(BMI_WHO)), method = "kruskal.test")
+p1 <- ggpubr::ggboxplot(AEDB.CEA %>% filter(!is.na(BMIGroup) & !is.na(BMI_WHO)), 
+                  x = c("BMIGroup"),
+                  y = "MCP1_pg_ml_2015", 
+                  xlab = "BMI groups (kg/m2) per WHO categories",
+                  ylab = "MCP1 plaque [pg/mL]",
+                  color = "BMI_WHO",
+                  palette = "npg",
+                  add = "jitter") +
+  stat_compare_means(method = "kruskal.test")
+ggpar(p1, legend = "right")
+rm(p1)
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.raw.BMI_byWHO.pdf"), plot = last_plot())
+
+```
+
+
+## Diabetes
+We want to create figures of MCP1 levels stratified by type 2 diabetes. 
+
+- Box and Whisker plot for MCP-1 plaque levels by type 2 diabetes group (no, yes)
+
+Now we can draw some graphs of plaque MCP1 levels per sex and age group.
+
+### Inverse-rank transformed data
+
+```{r MCP1 per Diabetes per Sex, ranked}
+
+# Global test
+compare_means(MCP1_pg_ml_2015_rank ~ DiabetesStatus,  data = AEDB.CEA %>% filter(!is.na(DiabetesStatus)), method = "kruskal.test")
+ggpubr::ggboxplot(AEDB.CEA %>% filter(!is.na(DiabetesStatus)), 
+                  x = c("DiabetesStatus"),
+                  y = "MCP1_pg_ml_2015_rank", 
+                  xlab = "Diabetes status",
+                  ylab = "MCP1 plaque [pg/mL]\n(inverse-rank transformation)",
+                  # color = "Gender",
+                  # palette = c("#D5267B", "#1290D9"),
+                  color = "DiabetesStatus",
+                  palette = "npg",
+                  add = "jitter") +
+  stat_compare_means(label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.Diabetes.pdf"), plot = last_plot())
+
+compare_means(MCP1_pg_ml_2015_rank ~ DiabetesStatus, group.by = "Gender", data = AEDB.CEA %>% filter(!is.na(DiabetesStatus)), method = "kruskal.test")
+ggpubr::ggboxplot(AEDB.CEA %>% filter(!is.na(DiabetesStatus)), 
+                  x = c("DiabetesStatus"),
+                  y = "MCP1_pg_ml_2015_rank", 
+                  xlab = "Diabetes status per gender",
+                  ylab = "MCP1 plaque [pg/mL]\n(inverse-rank transformation)",
+                  color = "Gender",
+                  palette = c("#D5267B", "#1290D9"),
+                  add = "jitter") +
+  stat_compare_means(aes(group = Gender), label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.Diabetes_byGender.pdf"), plot = last_plot())
+
+```
+
+
+### Raw data
+
+Simalarly but now for the raw data as median ± interquartile range.
+
+
+```{r MCP1 per Diabetes per Sex}
+
+# Global test
+compare_means(MCP1_pg_ml_2015 ~ DiabetesStatus,  data = AEDB.CEA %>% filter(!is.na(DiabetesStatus)), method = "kruskal.test")
+ggpubr::ggboxplot(AEDB.CEA %>% filter(!is.na(DiabetesStatus)), 
+                  x = c("DiabetesStatus"),
+                  y = "MCP1_pg_ml_2015", 
+                  xlab = "Diabetes status",
+                  ylab = "MCP1 plaque [pg/mL]",
+                  # color = "Gender",
+                  # palette = c("#D5267B", "#1290D9"),
+                  color = "DiabetesStatus",
+                  palette = "npg",
+                  add = c("median_iqr", "jitter")) +
+  stat_compare_means(label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.raw.Diabetes.pdf"), plot = last_plot())
+
+compare_means(MCP1_pg_ml_2015 ~ DiabetesStatus, group.by = "Gender", data = AEDB.CEA %>% filter(!is.na(DiabetesStatus)), method = "kruskal.test")
+ggpubr::ggboxplot(AEDB.CEA %>% filter(!is.na(DiabetesStatus)), 
+                  x = c("DiabetesStatus"),
+                  y = "MCP1_pg_ml_2015", 
+                  xlab = "Diabetes status per gender",
+                  ylab = "MCP1 plaque [pg/mL]",
+                  color = "Gender",
+                  palette = c("#D5267B", "#1290D9"),
+                  add = c("median_iqr", "jitter")) +
+  stat_compare_means(aes(group = Gender), label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.raw.Diabetes_byGender.pdf"), plot = last_plot())
+
+
+```
+
+
+
+## Smoking
+We want to create figures of MCP1 levels stratified by smoking. 
+
+- Box and Whisker plot for MCP-1 plaque levels by smoking group (never, ex, current)
+
+Now we can draw some graphs of plaque MCP1 levels per sex and age group.
+
+### Inverse-rank transformed data
+
+```{r MCP1 per Smoking per Sex, ranked}
+
+# Global test
+compare_means(MCP1_pg_ml_2015_rank ~ SmokerStatus,  data = AEDB.CEA %>% filter(!is.na(SmokerStatus)), method = "kruskal.test")
+ggpubr::ggboxplot(AEDB.CEA %>% filter(!is.na(SmokerStatus)), 
+                  x = c("SmokerStatus"),
+                  y = "MCP1_pg_ml_2015_rank", 
+                  xlab = "Smoker status",
+                  ylab = "MCP1 plaque [pg/mL]\n(inverse-rank transformation)",
+                  # color = "Gender",
+                  # palette = c("#D5267B", "#1290D9"),
+                  color = "SmokerStatus",
+                  palette = "npg",
+                  add = "jitter") +
+  stat_compare_means(label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.Smoking.pdf"), plot = last_plot())
+
+compare_means(MCP1_pg_ml_2015_rank ~ SmokerStatus, group.by = "Gender", data = AEDB.CEA %>% filter(!is.na(SmokerStatus)), method = "kruskal.test")
+ggpubr::ggboxplot(AEDB.CEA %>% filter(!is.na(SmokerStatus)), 
+                  x = c("SmokerStatus"),
+                  y = "MCP1_pg_ml_2015_rank", 
+                  xlab = "Smoker status per gender",
+                  ylab = "MCP1 plaque [pg/mL]\n(inverse-rank transformation)",
+                  color = "Gender",
+                  palette = c("#D5267B", "#1290D9"),
+                  add = "jitter") +
+  stat_compare_means(aes(group = Gender), label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.Smoking_byGender.pdf"), plot = last_plot())
+
+```
+
+
+### Raw data
+
+Simalarly but now for the raw data as median ± interquartile range.
+
+
+```{r MCP1 per Smoking per Sex}
+
+# Global test
+compare_means(MCP1_pg_ml_2015 ~ SmokerStatus,  data = AEDB.CEA %>% filter(!is.na(SmokerStatus)), method = "kruskal.test")
+ggpubr::ggboxplot(AEDB.CEA %>% filter(!is.na(SmokerStatus)), 
+                  x = c("SmokerStatus"),
+                  y = "MCP1_pg_ml_2015", 
+                  xlab = "Smoker status",
+                  ylab = "MCP1 plaque [pg/mL]",
+                  # color = "Gender",
+                  # palette = c("#D5267B", "#1290D9"),
+                  color = "SmokerStatus",
+                  palette = "npg",
+                  add = c("median_iqr", "jitter")) +
+  stat_compare_means(label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.raw.Smoking.pdf"), plot = last_plot())
+
+compare_means(MCP1_pg_ml_2015 ~ SmokerStatus, group.by ="Gender", data = AEDB.CEA %>% filter(!is.na(SmokerStatus)), method = "kruskal.test")
+ggpubr::ggboxplot(AEDB.CEA %>% filter(!is.na(SmokerStatus)), 
+                  x = c("SmokerStatus"),
+                  y = "MCP1_pg_ml_2015", 
+                  xlab = "Smoker status per gender",
+                  ylab = "MCP1 plaque [pg/mL]",
+                  color = "Gender",
+                  palette = c("#D5267B", "#1290D9"),
+                  add = c("median_iqr", "jitter")) +
+  stat_compare_means(aes(group = Gender), label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.raw.Smoking_byGender.pdf"), plot = last_plot())
+
+```
+
+
+
+## Stenosis
+We want to create figures of MCP1 levels stratified by stenosis grade. 
+
+- Box and Whisker plot for MCP-1 plaque levels by stenosis grade group (<70, 70-89, 90+)
+
+```{r Stenosis}
+library(dplyr)
+
+AEDB.CEA <- AEDB.CEA %>% mutate(StenoticGroup = factor(case_when(stenose == "0-49%" ~ "<70",
+                                                     stenose == "0-49%" ~ "<70",
+                                                     stenose == "50-70%" ~ "<70",
+                                                     stenose == "70-90%" ~ "70-89",
+                                                     stenose == "50-99%" ~ "90+",
+                                                     stenose == "70-99%" ~ "90+",
+                                                     stenose == "100% (Occlusion)" ~ "90+",
+                                                     stenose == "90-99%" ~ "90+")))
+
+table(AEDB.CEA$StenoticGroup, AEDB.CEA$Gender)
+table(AEDB.CEA$stenose, AEDB.CEA$StenoticGroup)
+
+```
+
+Now we can draw some graphs of plaque MCP1 levels per sex and age group.
+
+### Inverse-rank transformed data
+
+```{r MCP1 per Stenosis per Sex, ranked}
+
+# Global test
+compare_means(MCP1_pg_ml_2015_rank ~ StenoticGroup,  data = AEDB.CEA %>% filter(!is.na(StenoticGroup)), method = "kruskal.test")
+ggpubr::ggboxplot(AEDB.CEA %>% filter(!is.na(StenoticGroup)), 
+                  x = c("StenoticGroup"),
+                  y = "MCP1_pg_ml_2015_rank", 
+                  xlab = "Stenotic grade",
+                  ylab = "MCP1 plaque [pg/mL]\n(inverse-rank transformation)",
+                  # color = "Gender",
+                  # palette = c("#D5267B", "#1290D9"),
+                  color = "StenoticGroup",
+                  palette = "npg",
+                  add = "jitter") +
+  stat_compare_means(label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.Stenosis.pdf"), plot = last_plot())
+
+compare_means(MCP1_pg_ml_2015_rank ~ StenoticGroup, group.by ="Gender", data = AEDB.CEA %>% filter(!is.na(StenoticGroup)), method = "kruskal.test")
+ggpubr::ggboxplot(AEDB.CEA %>% filter(!is.na(StenoticGroup)), 
+                  x = c("StenoticGroup"),
+                  y = "MCP1_pg_ml_2015_rank", 
+                  xlab = "Stenotic grade per gender",
+                  ylab = "MCP1 plaque [pg/mL]\n(inverse-rank transformation)",
+                  color = "Gender",
+                  palette = c("#D5267B", "#1290D9"),
+                  add = "jitter") +
+  stat_compare_means(aes(group = Gender), label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.Stenosis_byGender.pdf"), plot = last_plot())
+
+```
+
+
+### Raw data
+
+Simalarly but now for the raw data as median ± interquartile range.
+
+```{r MCP1 per Stenosis per Sex}
+
+# Global test
+compare_means(MCP1_pg_ml_2015 ~ StenoticGroup,  data = AEDB.CEA %>% filter(!is.na(StenoticGroup)), method = "kruskal.test")
+ggpubr::ggboxplot(AEDB.CEA %>% filter(!is.na(StenoticGroup)), 
+                  x = c("StenoticGroup"),
+                  y = "MCP1_pg_ml_2015", 
+                  xlab = "Stenotic grade",
+                  ylab = "MCP1 plaque [pg/mL]",
+                  # color = "Gender",
+                  # palette = c("#D5267B", "#1290D9"),
+                  color = "StenoticGroup",
+                  palette = "npg",
+                  add = "jitter") +
+  stat_compare_means(label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.raw.Stenosis.pdf"), plot = last_plot())
+
+compare_means(MCP1_pg_ml_2015 ~ StenoticGroup, group.by = "Gender", data = AEDB.CEA %>% filter(!is.na(StenoticGroup)), method = "kruskal.test")
+ggpubr::ggboxplot(AEDB.CEA %>% filter(!is.na(StenoticGroup)), 
+                  x = c("StenoticGroup"),
+                  y = "MCP1_pg_ml_2015", 
+                  xlab = "Stenotic grade per gender",
+                  ylab = "MCP1 plaque [pg/mL]",
+                  color = "Gender",
+                  palette = c("#D5267B", "#1290D9"),
+                  add = "jitter") +
+  stat_compare_means(aes(group = Gender), label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.raw.Stenosis_byGender.pdf"), plot = last_plot())
+
+```
+
+
+## Plaque vs. plaque MCP1 levels
+We will also make a nice correlation plot between the two experiments of plaque MCP1 levels. 
+
+```{r MCP1 correlations, plaque vs. plaque}
+AEDB.CEA$MCP1_rank <- qnorm((rank(AEDB.CEA$MCP1, na.last = "keep") - 0.5) / sum(!is.na(AEDB.CEA$MCP1)))
+summary(AEDB.CEA$MCP1)
+summary(AEDB.CEA$MCP1_pg_ug_2015)
+
+ggpubr::ggscatter(AEDB.CEA, 
+                  x = "MCP1", 
+                  y = "MCP1_pg_ml_2015",
+                  xlab = "MCP1 plaque [pg/mL] (exp. no. 1)",
+                  ylab = "MCP1 plaque [pg/mL] (exp. no. 2)",
+                  add = "reg.line", add.params = list(color = "#1290D9"),
+                  conf.int = TRUE,
+                  cor.coef = TRUE, cor.coeff.args = list(method = "spearman"))
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque_vs_plaque.raw.pdf"), plot = last_plot())
+
+ggpubr::ggscatter(AEDB.CEA, 
+                  x = "MCP1_rank", 
+                  y = "MCP1_pg_ml_2015_rank",
+                  xlab = "MCP1 plaque [pg/mL] (exp. no. 1)",
+                  ylab = "MCP1 plaque [pg/mL] (exp. no. 2)",
+                  add = "reg.line", add.params = list(color = "#1290D9"),
+                  conf.int = TRUE,
+                  cor.coef = TRUE, cor.coeff.args = list(method = "spearman"))
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque_vs_plaque.rank.pdf"), plot = last_plot())
+
+
+```
+
+
+## Symptoms
+We want to create per-symptom figures. 
+
+```{r SymptomGroups}
+library(dplyr)
+
+table(AEDB.CEA$AgeGroup, AEDB.CEA$AsymptSympt2G)
+table(AEDB.CEA$Gender, AEDB.CEA$AsymptSympt2G)
+table(AEDB.CEA$AsymptSympt2G)
+
+```
+
+### Inverse-rank transformed data
+
+Now we can draw some graphs of plaque MCP1 levels per symptom group.
+```{r MCP1 per SymptomGroups, ranked}
+
+# ?ggpubr::ggboxplot()
+my_comparisons <- list(c("Asymptomatic", "Symptomatic"))
+
+p1 <- ggpubr::ggdotplot(AEDB.CEA, 
+                  x = "AsymptSympt2G", y = "MCP1_pg_ml_2015_rank",
+                  title = "MCP1 plaque [pg/mL] levels per symptom", 
+                  xlab = "Symptoms",
+                  ylab = "MCP1 plaque [pg/mL]\n inverse-rank transformation",
+                  color = "AsymptSympt2G", fill = "AsymptSympt2G",
+                  # palette = c(uithof_color[16], uithof_color[23]),
+                  palette = "npg",
+                  size = 0.25,
+                  add = "boxplot", # Add dotplot
+                  add.params = list(binwidth = 0.1, dotsize = 0.3)
+          ) +
+  stat_compare_means(comparisons = my_comparisons, method = "wilcox.test")
+ggpar(p1, legend = c("right"), legend.title = "Symptoms")
+
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.AsymptSympt2G.pdf"), plot = last_plot())
+
+rm(p1)
+
+compare_means(MCP1_pg_ml_2015_rank ~ AsymptSympt2G, group.by = "Gender", data = AEDB.CEA, method = "kruskal.test")
+p1 <- ggpubr::ggdotplot(AEDB.CEA, 
+                  x = "AsymptSympt2G", y = "MCP1_pg_ml_2015_rank",
+                  title = "MCP1 plaque [pg/mL] levels per symptom by gender", 
+                  xlab = "Symptoms",
+                  ylab = "MCP1 plaque [pg/mL]\n inverse-rank transformation",
+                  color = "Gender", fill = "Gender",
+                  palette = c("#D5267B", "#1290D9"),
+                  size = 0.15,
+                  add = "boxplot", # Add dotplot
+                  add.params = list(binwidth = 0.1, dotsize = 0.3)
+          ) +
+  stat_compare_means(aes(group = Gender), label = "p.format",  method = "wilcox.test")
+ggpar(p1, legend = c("right"), legend.title = "Symptoms")
+
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.AsymptSympt2G.byGender.pdf"), plot = last_plot())
+
+rm(p1)
+
+# regular boxplots
+p1 <- ggpubr::ggboxplot(AEDB.CEA, 
+                  x = "AsymptSympt2G", y = "MCP1_pg_ml_2015_rank",
+                  title = "MCP1 plaque [pg/mL] levels per symptom", 
+                  xlab = "Symptoms",
+                  ylab = "MCP1 plaque [pg/mL]\n inverse-rank transformation",
+                  color = "AsymptSympt2G", 
+                  # palette = c(uithof_color[16], uithof_color[23]),
+                  palette = "npg",
+                  add = "jitter", 
+                  add.params = list(binwidth = 0.1, dotsize = 0.3)
+          ) +
+  stat_compare_means(comparisons = my_comparisons, method = "wilcox.test")
+ggpar(p1, legend = c("right"), legend.title = "Symptoms")
+
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.AsymptSympt2G.regBoxPlot.pdf"), plot = last_plot())
+
+rm(p1)
+
+compare_means(MCP1_pg_ml_2015_rank ~ AsymptSympt2G, group.by = "Gender", data = AEDB.CEA, method = "kruskal.test")
+p1 <- ggpubr::ggboxplot(AEDB.CEA, 
+                  x = "AsymptSympt2G", y = "MCP1_pg_ml_2015_rank",
+                  title = "MCP1 plaque [pg/mL] levels per symptom by gender", 
+                  xlab = "Symptoms",
+                  ylab = "MCP1 plaque [pg/mL]\n inverse-rank transformation",
+                  color = "Gender", 
+                  palette = c("#D5267B", "#1290D9"),
+                  add = "jitter", 
+                  add.params = list(binwidth = 0.1, dotsize = 0.3)
+          ) +
+  stat_compare_means(aes(group = Gender), label = "p.format",  method = "wilcox.test")
+ggpar(p1, legend = c("right"), legend.title = "Symptoms")
+
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.AsymptSympt2G.byGender.regBoxPlot.pdf"), plot = last_plot())
+
+rm(p1)
+
+```
+
+### Raw data
+
+Simalarly but now for the raw data as median ± interquartile range.
+
+```{r MCP1 per SymptomGroups}
+
+# ?ggpubr::ggboxplot()
+my_comparisons <- list(c("Asymptomatic", "Symptomatic"))
+
+p1 <- ggpubr::ggboxplot(AEDB.CEA, 
+                  x = "AsymptSympt2G", y = "MCP1_pg_ml_2015",
+                  title = "MCP1 plaque [pg/mL] levels per symptom", 
+                  xlab = "Symptoms",
+                  ylab = "MCP1 plaque [pg/mL]",
+                  color = "AsymptSympt2G", 
+                  # palette = c(uithof_color[16], uithof_color[23]),
+                  palette = "npg",
+                  add = "dotplot", # Add dotplot
+                  add.params = list(binwidth = 0.1, dotsize = 0.3)
+          ) +
+  stat_compare_means(comparisons = my_comparisons, method = "wilcox.test")
+ggpar(p1, legend = c("right"), legend.title = "Symptoms")
+
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.raw.AsymptSympt2G.pdf"), plot = last_plot())
+
+rm(p1)
+
+compare_means(MCP1_pg_ml_2015 ~ AsymptSympt2G, group.by = "Gender", data = AEDB.CEA, method = "kruskal.test")
+p1 <- ggpubr::ggboxplot(AEDB.CEA, 
+                  x = "AsymptSympt2G", y = "MCP1_pg_ml_2015",
+                  title = "MCP1 plaque [pg/mL] levels per symptom by gender", 
+                  xlab = "Symptoms",
+                  ylab = "MCP1 plaque [pg/mL]",
+                  color = "Gender",
+                  palette = c("#D5267B", "#1290D9"),
+                  add = "dotplot", # Add dotplot
+                  add.params = list(binwidth = 0.1, dotsize = 0.3)
+          ) +
+  stat_compare_means(aes(group = Gender), label = "p.format",  method = "wilcox.test")
+ggpar(p1, legend = c("right"), legend.title = "Symptoms")
+
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.raw.AsymptSympt2G.byGender.pdf"), plot = last_plot())
+
+rm(p1)
+
+```
+
+
+## Forest plots
+
+We would also like to visualize the multivariable analyses results.
+```{r load model data}
+library(ggplot2)
+library(openxlsx)
+model1_mcp1 <- read.xlsx(paste0(OUT_loc, "/", Today, ".AEDB.CEA.Bin.Uni.Protein.RANK.Symptoms.MODEL1.xlsx"))
+model2_mcp1 <- read.xlsx(paste0(OUT_loc, "/", Today, ".AEDB.CEA.Bin.Multi.Protein.RANK.Symptoms.MODEL2.xlsx"))
+model1_mcp1$model <- "univariate"
+model2_mcp1$model <- "multivariate"
+
+models_mcp1 <- rbind(model1_mcp1, model2_mcp1)
+models_mcp1
+
+```
+
+Forest plot for experiment 2.
+
+```{r forestplot plaque, experiment 2}
+dat <- data.frame(group = factor(c("Age, sex-adjusted", "Age, sex, and adjusted for risk factors"), 
+                           
+                           levels=c("Age, sex, and adjusted for risk factors", "Age, sex-adjusted")),
+                  cen = c(models_mcp1$OR[models_mcp1$Predictor=="MCP1_pg_ml_2015_rank"]),
+                  low = c(models_mcp1$low95CI[models_mcp1$Predictor=="MCP1_pg_ml_2015_rank"]),
+                  high = c(models_mcp1$up95CI[models_mcp1$Predictor=="MCP1_pg_ml_2015_rank"]))
+
+fp <- ggplot(data = dat, aes(x = group, y = cen, ymin = low, ymax = high)) +
+  geom_pointrange(linetype = 2, size = 1, colour = c("#1290D9", "#49A01D")) + 
+  geom_hline(yintercept = 1, lty = 2) +  # add a dotted line at x=1 after flip
+  coord_flip(ylim = c(0.8, 1.7)) +  # flip coordinates (puts labels on y axis)
+  xlab("Model") + ylab("OR (95% CI) for symptomatic plaques") +
+  ggtitle("Plaque MCP-1 levels (1 SD increment, exp. #2, n = 1190+)") +
+  theme_minimal()  # use a white background
+print(fp)
+
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.exp2.forest.pdf"), plot = fp)
+
+rm(fp)
+```
+
+Forest plot for experiment 1.
+
+```{r forestplot plaque, experiment 1}
+dat <- data.frame(group = factor(c("Age, sex-adjusted", "Age, sex, and adjusted for risk factors"), 
+                           
+                           levels=c("Age, sex, and adjusted for risk factors", "Age, sex-adjusted")),
+                  cen = c(models_mcp1$OR[models_mcp1$Predictor=="MCP1_rank"]),
+                  low = c(models_mcp1$low95CI[models_mcp1$Predictor=="MCP1_rank"]),
+                  high = c(models_mcp1$up95CI[models_mcp1$Predictor=="MCP1_rank"]))
+
+fp <- ggplot(data = dat, aes(x = group, y = cen, ymin = low, ymax = high)) +
+  geom_pointrange(linetype = 2, size = 1, colour = c("#1290D9", "#49A01D")) + 
+  geom_hline(yintercept = 1, lty = 2) +  # add a dotted line at x=1 after flip
+  coord_flip(ylim = c(0.8, 1.7)) +  # flip coordinates (puts labels on y axis)
+  xlab("Model") + ylab("OR (95% CI) for symptomatic plaques") +
+  ggtitle("Plaque MCP-1 levels (1 SD increment, exp. #1, n = 490+)") +
+  theme_minimal()  # use a white background
+print(fp)
+
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.exp1.forest.pdf"), plot = fp)
+
+rm(fp)
+```
+
+
+## MCP1 vs. cytokines plaque levels correlations
+
+We will plot the correlations of other cytokine plaque levels to the MCP1 plaque levels. These include:
+
+- IL2
+- IL4
+- IL5
+- IL6
+- IL8
+- IL9
+- IL10
+- IL12
+- IL13
+- IL21
+- INFG
+- TNFA
+- MIF
+- MCP1
+- MIP1a
+- RANTES
+- MIG
+- IP10
+- Eotaxin1
+- TARC
+- PARC
+- MDC
+- OPG
+- sICAM1
+- VEGFA
+- TGFB
+
+In addition we will look at three metalloproteinases which were measured using an activity assay. 
+
+- MMP2
+- MMP8
+- MMP9
+
+The proteins were measured using FACS and LUMINEX. Given the different platforms used (FACS vs. LUMINEX), we will inverse rank-normalize these variables as well to scale them to the same scale as the MCP1 plaque levels.
+
+
+We will set the measurements that yielded '0' to NA, as it is unlikely that any protein ever has exactly 0 copies. The '0' yielded during the experiment are due to the limits of the detection.
+
+### Prepare data
+```{r MCP1 vs Cytokines INRT, paged.print=TRUE}
+cytokines <- c("IL2", "IL4", "IL5", "IL6", "IL8", "IL9", "IL10", "IL12", "IL13", "IL21", 
+               "INFG", "TNFA", "MIF", "MCP1", "MIP1a", "RANTES", "MIG", "IP10", "Eotaxin1", 
+               "TARC", "PARC", "MDC", "OPG", "sICAM1", "VEGFA", "TGFB")
+metalloproteinases <- c("MMP2", "MMP8", "MMP9")
+
+# fix names
+names(AEDB.CEA)[names(AEDB.CEA) == "VEFGA"] <- "VEGFA"
+
+
+proteins_of_interest <- c(cytokines, metalloproteinases)
+
+proteins_of_interest_rank = unlist(lapply(proteins_of_interest, paste0, "_rank"))
+
+
+# make variables numerics()
+AEDB.CEA <- AEDB.CEA %>%
+  mutate_each(funs(as.numeric), proteins_of_interest)
+  
+for(PROTEIN in 1:length(proteins_of_interest)){
+
+  # UCORBIOGSAqc$Z <- NULL
+  var.temp.rank = proteins_of_interest_rank[PROTEIN]
+  var.temp = proteins_of_interest[PROTEIN]
+  
+  cat(paste0("\nSelecting ", var.temp, " and standardising: ", var.temp.rank,".\n"))
+  cat(paste0("* changing ", var.temp, " to numeric.\n"))
+
+  # AEDB.CEA <-  AEDB.CEA %>% mutate(AEDB.CEA[,var.temp] == replace(AEDB.CEA[,var.temp], AEDB.CEA[,var.temp]==0, NA))
+
+  AEDB.CEA[,var.temp][AEDB.CEA[,var.temp]==0.000000]=NA
+
+  cat(paste0("* standardising ", var.temp, 
+             " (mean: ",round(mean(!is.na(AEDB.CEA[,var.temp])), digits = 6),
+             ", n = ",sum(!is.na(AEDB.CEA[,var.temp])),").\n"))
+  
+  AEDB.CEA <- AEDB.CEA %>%
+      mutate_at(vars(var.temp), 
+        # list(Z = ~ (AEDB.CEA[,var.temp] - mean(AEDB.CEA[,var.temp], na.rm = TRUE))/sd(AEDB.CEA[,var.temp], na.rm = TRUE))
+        list(RANK = ~ qnorm((rank(AEDB.CEA[,var.temp], na.last = "keep") - 0.5) / sum(!is.na(AEDB.CEA[,var.temp]))))
+      )
+  # str(UCORBIOGSAqc$Z)
+  cat(paste0("* renaming RANK to ", var.temp.rank,".\n"))
+  AEDB.CEA[,var.temp.rank] <- NULL
+  names(AEDB.CEA)[names(AEDB.CEA) == "RANK"] <- var.temp.rank
+}
+
+# rm(var.temp, var.temp.rank)
+
+```
+
+### Visualize transformations
+
+We will just visualize these transformations.
+
+```{r MCP1 vs Cytokines Histograms}
+proteins_of_interest_rank_mcp1 <- c("MCP1_pg_ml_2015_rank", proteins_of_interest_rank)
+
+proteins_of_interest_mcp1 <- c("MCP1_pg_ml_2015", proteins_of_interest)
+
+for(PROTEIN in proteins_of_interest_mcp1){
+  cat(paste0("Plotting protein ", PROTEIN, ".\n"))
+  
+  p1 <- ggpubr::gghistogram(AEDB.CEA, PROTEIN,
+                    # y = "..count..",
+                    color = "white",
+                    fill = "Gender",
+                    palette = c("#1290D9", "#DB003F"),
+                    add = "mean",
+                    # rug = TRUE,
+                    # add.params =  list(color = "black", linetype = 2),
+                    title = paste0(PROTEIN, " plaque levels"),
+                    xlab = "",
+                    ggtheme = theme_minimal())
+  print(p1)
+  
+}
+
+
+for(PROTEIN in proteins_of_interest_rank_mcp1){
+  cat(paste0("Plotting protein ", PROTEIN, ".\n"))
+  
+  p1 <- ggpubr::gghistogram(AEDB.CEA, PROTEIN,
+                    # y = "..count..",
+                    color = "white",
+                    fill = "Gender",
+                    palette = c("#1290D9", "#DB003F"),
+                    add = "mean",
+                    # rug = TRUE,
+                    # add.params =  list(color = "black", linetype = 2),
+                    title = paste0(PROTEIN, " plaque levels"),
+                    xlab = "inverse-normal transformation",
+                    ggtheme = theme_minimal())
+  print(p1)
+  
+}
+  
+```
+
+### Correlations
+
+Here we calculate correlations between `MCP1_pg_ug_2015` and 28 other cytokines (including `MCP1` as measured in experiment 1. We use Spearman's test, thus, correlations a given in _rho_. Please note the indications of measurement methods:
+
+- _L_: LUMINEX
+- _E_: ELISA
+- _a_: activity assay
+
+```{r MCP1 vs Cytokines correlations}
+# Installation of ggcorrplot()
+# --------------------------------
+if(!require(devtools)) 
+  install.packages("devtools")
+devtools::install_github("kassambara/ggcorrplot")
+
+library(ggcorrplot)
+
+# Creating matrix - inverse-rank transformation
+# --------------------------------
+AEDB.CEA.temp <- subset(AEDB.CEA, 
+                          select = c(proteins_of_interest_rank_mcp1)
+                                    )
+
+# str(AEDB.CEA.temp)
+AEDB.CEA.matrix.RANK <- as.matrix(AEDB.CEA.temp)
+rm(AEDB.CEA.temp)
+
+corr_biomarkers.rank <- round(cor(AEDB.CEA.matrix.RANK, 
+                             use = "pairwise.complete.obs", #the correlation or covariance between each pair of variables is computed using all complete pairs of observations on those variables
+                             method = "spearman"), 3)
+# corr_biomarkers.rank
+
+rename_proteins_of_interest_mcp1 <- c("MCP1 (L, exp2, pg/mL)", 
+                                    "IL2", "IL4", "IL5", "IL6", "IL8", "IL9", "IL10", "IL12", 
+                                    "IL13 (L)", "IL21 (L)", 
+                                    "INFG", "TNFA", "MIF (L)", 
+                                    "MCP1 (L, exp1)", "MIP1a (L)", "RANTES (L)", "MIG (L)", "IP10 (L)", 
+                                    "Eotaxin1 (L)", "TARC (L)", "PARC (L)", "MDC (L)", 
+                                    "OPG (L)", "sICAM1 (L)", "VEGFA (E)", "TGFB (E)", "MMP2 (a)", "MMP8 (a)", "MMP9 (a)")
+colnames(corr_biomarkers.rank) <- c(rename_proteins_of_interest_mcp1)
+rownames(corr_biomarkers.rank) <- c(rename_proteins_of_interest_mcp1)
+
+corr_biomarkers_p.rank <- ggcorrplot::cor_pmat(AEDB.CEA.matrix.RANK, use = "pairwise.complete.obs", method = "spearman")
+
+# ++++++++++++++++++++++++++++
+# flattenCorrMatrix
+# ++++++++++++++++++++++++++++
+# cormat : matrix of the correlation coefficients
+# pmat : matrix of the correlation p-values
+flattenCorrMatrix <- function(cormat, pmat) {
+  ut <- upper.tri(cormat)
+  data.frame(
+    row = rownames(cormat)[row(cormat)[ut]],
+    column = rownames(cormat)[col(cormat)[ut]],
+    cor  =(cormat)[ut],
+    p = pmat[ut]
+    )
+}
+
+corr_biomarkers.rank.df <- flattenCorrMatrix(corr_biomarkers.rank, corr_biomarkers_p.rank)
+
+
+names(corr_biomarkers.rank.df)[names(corr_biomarkers.rank.df) == "row"] <- "Cytokine_X"
+names(corr_biomarkers.rank.df)[names(corr_biomarkers.rank.df) == "column"] <- "CytokineY"
+names(corr_biomarkers.rank.df)[names(corr_biomarkers.rank.df) == "cor"] <- "SpearmanRho"
+
+DT::datatable(corr_biomarkers.rank.df)
+
+fwrite(corr_biomarkers.rank.df, file = paste0(OUT_loc, "/",Today,".correlation_cytokines.txt"))
+
+```
+
+```{r MCP1 vs Cytokines heatmap}
+# Add correlation coefficients
+# --------------------------------
+# argument lab = TRUE
+p1 <- ggcorrplot(corr_biomarkers.rank, 
+           method = "square", 
+           type = "lower",
+           title = "Cross biomarker correlations", 
+           show.legend = TRUE, legend.title = bquote("Spearman's"~italic(rho)),
+           ggtheme = ggplot2::theme_minimal, outline.color = "#FFFFFF",
+           show.diag = TRUE,
+           hc.order = FALSE, 
+           lab = FALSE,
+           digits = 3,
+           tl.cex = 6,
+           # xlab = c("MCP1"),
+           # p.mat = corr_biomarkers_p.rank, sig.level = 0.05,
+           colors = c("#1290D9", "#FFFFFF", "#E55738"))
+p1
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".correlation_cytokines.png"), plot = last_plot())
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".correlation_cytokines.pdf"), plot = last_plot())
+
+rm(p1)
+
+```
+
+While visually actractive we are not necessarily interested in the correlations between all the cytokines, rather of MCP1 with other cytokines only.
+
+```{r MCP1 vs Cytokines barplot}
+temp <- subset(corr_biomarkers.rank.df, Cytokine_X == "MCP1 (L, exp2, pg/mL)" )
+temp$p_log10 <- -log10(temp$p)
+p_threshold <- -log10(0.05/29)
+p_threshold
+p1 <- ggbarplot(temp, x = "CytokineY", y = "SpearmanRho",
+          fill = "CytokineY",               # change fill color by cyl
+          # color = "white",            # Set bar border colors to white
+          palette = uithof_color,            # jco journal color palett. see ?ggpar
+          xlab = "Cytokine",
+          ylab = expression("Spearman's"~italic(rho)),
+          sort.val = "desc",          # Sort the value in dscending order
+          sort.by.groups = FALSE,     # Don't sort inside each group
+          x.text.angle = 45, # Rotate vertically x axis texts
+          cex = 0.8
+          )
+ggpar(p1, legend = "bottom", 
+      legend.title = "") +
+  theme(axis.text.x = element_text(size = 9),
+        axis.text.y = element_text(size = 9)) 
+
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.barplot_pgmL.MCP1_exp2_vs_Cytokines.png"), plot = last_plot())
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.barplot_pgmL.MCP1_exp2_vs_Cytokines.pdf"), plot = last_plot())
+rm(p1)
+
+temp <- subset(corr_biomarkers.rank.df, Cytokine_X == "MCP1 (L, exp1)" )
+temp$p_log10 <- -log10(temp$p)
+p_threshold <- -log10(0.05/29)
+p_threshold
+p1 <- ggbarplot(temp, x = "CytokineY", y = "SpearmanRho",
+          fill = "CytokineY",               # change fill color by cyl
+          # color = "white",            # Set bar border colors to white
+          palette = uithof_color,            # jco journal color palett. see ?ggpar
+          xlab = "Cytokine",
+          ylab = expression("Spearman's"~italic(rho)),
+          sort.val = "desc",          # Sort the value in dscending order
+          sort.by.groups = FALSE,     # Don't sort inside each group
+          x.text.angle = 45, # Rotate vertically x axis texts
+          cex = 0.8
+          )
+ggpar(p1, legend = "bottom", 
+      legend.title = "") +
+  theme(axis.text.x = element_text(size = 9),
+        axis.text.y = element_text(size = 9)) 
+
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.barplot_pgmL.MCP1_exp1_vs_Cytokines.png"), plot = last_plot())
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.barplot_pgmL.MCP1_exp1_vs_Cytokines.pdf"), plot = last_plot())
+
+rm(p1)
+
+```
+
+Another version - probably not good. 
+```{r MCP1 vs Cytokines dotchart}
+temp <- subset(corr_biomarkers.rank.df, Cytokine_X == "MCP1 (L, exp2, pg/mL)" )
+temp$p_log10 <- -log10(temp$p)
+p_threshold <- -log10(0.05/29)
+p_threshold
+p1 <- ggdotchart(temp, x = "CytokineY", y = "p_log10",
+           color = "CytokineY", #fill = "CytokineY",                              # Color by groups
+           palette = uithof_color, # Custom color palette
+           xlab = "Cytokine",
+           ylab = expression(log[10]~"("~italic(p)~")-value"),
+           ylim = c(0, 9),
+           sorting = "descending",                       # Sort value in descending order
+           add = "segments",                             # Add segments from y = 0 to dots
+           rotate = FALSE,                                # Rotate vertically
+           # group = "CytokineY",                                # Order by groups
+           dot.size = 8,                                 # Large dot size
+           label = round(temp$SpearmanRho, digits = 3),                        # Add mpg values as dot labels
+           font.label = list(color = "white", size = 8, 
+                             vjust = 0.5)                   
+           )
+ggpar(p1, legend = "", 
+      legend.title = "") +
+  theme(axis.text.x = element_text(size = 9),
+        axis.text.y = element_text(size = 9))
+
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.dotchart.MCP1_vs_Cytokines.png"), plot = last_plot())
+ggsave(file = paste0(PLOT_loc, "/",Today,".AEDB.CEA.MCP1.plaque.dotchart.MCP1_vs_Cytokines.pdf"), plot = last_plot())
+
+rm(temp, p1)
+
+```
+
+
+## MCP1 vs. cytokines plaque levels `lm()`
+
+### Model 1
+
+In this model we correct for _Age_, _Gender_, and _year of surgery_.
+
+Here we use the inverse-rank normalized data - visually this is more normally distributed.
+
+Analysis of plaque cytokines traits as a function of plaque MCP1 levels.
+```{r CrossSec: Cytokines - linear regression MODEL1 RANK, paged.print=TRUE}
+
+GLM.results <- data.frame(matrix(NA, ncol = 15, nrow = 0))
+cat("Running linear regression...\n")
+for (protein in 1:length(TRAITS.PROTEIN.RANK)) {
+  PROTEIN = TRAITS.PROTEIN.RANK[protein]
+  cat(paste0("\nAnalysis of ",PROTEIN,".\n"))
+  for (trait in 1:length(proteins_of_interest_rank)) {
+    TRAIT = proteins_of_interest_rank[trait]
+    cat(paste0("\n- processing ",TRAIT,"\n\n"))
+    currentDF <- as.data.frame(AEDB.CEA %>%
+      dplyr::select(., PROTEIN, TRAIT, COVARIATES_M1) %>%
+      filter(complete.cases(.))) %>%
+      filter_if(~is.numeric(.), all_vars(!is.infinite(.)))
+    # for debug
+    # print(DT::datatable(currentDF))
+    # print(nrow(currentDF))
+    # print(str(currentDF))
+    ### univariate
+    fit <- lm(currentDF[,PROTEIN] ~ currentDF[,TRAIT] + Age + Gender + ORdate_year, data = currentDF)
+    model_step <- stepAIC(fit, direction = "both", trace = FALSE)
+    print(model_step)
+    print(summary(fit))
+
+    GLM.results.TEMP <- data.frame(matrix(NA, ncol = 15, nrow = 0))
+    GLM.results.TEMP[1,] = GLM.CON(fit, "AEDB.CEA", PROTEIN, TRAIT, verbose = TRUE)
+    GLM.results = rbind(GLM.results, GLM.results.TEMP)
+  }
+}
+cat("Edit the column names...\n")
+colnames(GLM.results) = c("Dataset", "Predictor", "Trait",
+                          "Beta", "s.e.m.",
+                          "OR", "low95CI", "up95CI",
+                          "T-value", "P-value", "r^2", "r^2_adj", "AE_N", "Model_N", "Perc_Miss")
+
+cat("Correct the variable types...\n")
+GLM.results$Beta <- as.numeric(GLM.results$Beta)
+GLM.results$s.e.m. <- as.numeric(GLM.results$s.e.m.)
+GLM.results$OR <- as.numeric(GLM.results$OR)
+GLM.results$low95CI <- as.numeric(GLM.results$low95CI)
+GLM.results$up95CI <- as.numeric(GLM.results$up95CI)
+GLM.results$`T-value` <- as.numeric(GLM.results$`T-value`)
+GLM.results$`P-value` <- as.numeric(GLM.results$`P-value`)
+GLM.results$`r^2` <- as.numeric(GLM.results$`r^2`)
+GLM.results$`r^2_adj` <- as.numeric(GLM.results$`r^2_adj`)
+GLM.results$`AE_N` <- as.numeric(GLM.results$`AE_N`)
+GLM.results$`Model_N` <- as.numeric(GLM.results$`Model_N`)
+GLM.results$`Perc_Miss` <- as.numeric(GLM.results$`Perc_Miss`)
+
+```
+
+```{r CrossSec: Cytokines - linear regression MODEL1 RANK Writing}
+DT::datatable(GLM.results)
+
+# Save the data
+cat("Writing results to Excel-file...\n")
+### Univariate
+library(openxlsx)
+write.xlsx(GLM.results,
+           file = paste0(OUT_loc, "/",Today,".AEDB.CEA.Con.Uni.MCP1_Plaque.Cytokines_Plaques.RANK.MODEL1.xlsx"),
+           row.names = FALSE, col.names = TRUE, sheetName = "Con.Uni.PlaquePheno")
+# Removing intermediates
+cat("Removing intermediate files...\n")
+rm(TRAIT, trait, currentDF, GLM.results, GLM.results.TEMP, fit, model_step)
+
+
+```
+
+
+
+### Model 2
+
+In this model we correct for _Age_, _Gender_, _year of surgery_, _Hypertension status_, _Diabetes status_, _current smoker status_, _lipid-lowering drugs (LLDs)_, _antiplatelet medication_, _eGFR (MDRD)_, _BMI_, _MedHx_CVD_ (combination of _CAD history_, _stroke history_, and _peripheral interventions_), and _stenosis_.
+
+Here we use the inverse-rank normalized data - visually this is more normally distributed.
+
+Analysis of plaque cytokines as a function of plaque MCP1 levels.
+```{r CrossSec: Cytokines - linear regression MODEL2 RANK, paged.print=TRUE}
+
+GLM.results <- data.frame(matrix(NA, ncol = 15, nrow = 0))
+cat("Running linear regression...\n")
+for (protein in 1:length(TRAITS.PROTEIN.RANK)) {
+  PROTEIN = TRAITS.PROTEIN.RANK[protein]
+  cat(paste0("\nAnalysis of ",PROTEIN,".\n"))
+  for (trait in 1:length(proteins_of_interest_rank)) {
+    TRAIT = proteins_of_interest_rank[trait]
+    cat(paste0("\n- processing ",TRAIT,"\n\n"))
+    currentDF <- as.data.frame(AEDB.CEA %>%
+      dplyr::select(., PROTEIN, TRAIT, COVARIATES_M2) %>%
+      filter(complete.cases(.))) %>%
+      filter_if(~is.numeric(.), all_vars(!is.infinite(.)))
+    # for debug
+    # print(DT::datatable(currentDF))
+    # print(nrow(currentDF))
+    # print(str(currentDF))
+    ### univariate
+    fit <- lm(currentDF[,PROTEIN] ~ currentDF[,TRAIT] + Age + Gender + ORdate_year + 
+                Hypertension.composite + DiabetesStatus + SmokerStatus + 
+                Med.Statin.LLD + Med.all.antiplatelet + GFR_MDRD + BMI + 
+                MedHx_CVD + stenose, 
+              data = currentDF)
+    model_step <- stepAIC(fit, direction = "both", trace = FALSE)
+    print(model_step)
+    print(summary(fit))
+    
+    GLM.results.TEMP <- data.frame(matrix(NA, ncol = 15, nrow = 0))
+    GLM.results.TEMP[1,] = GLM.CON(fit, "AEDB.CEA", PROTEIN, TRAIT, verbose = TRUE)
+    GLM.results = rbind(GLM.results, GLM.results.TEMP)
+  }
+}
+cat("Edit the column names...\n")
+colnames(GLM.results) = c("Dataset", "Predictor", "Trait",
+                          "Beta", "s.e.m.",
+                          "OR", "low95CI", "up95CI",
+                          "T-value", "P-value", "r^2", "r^2_adj", "AE_N", "Model_N", "Perc_Miss")
+
+cat("Correct the variable types...\n")
+GLM.results$Beta <- as.numeric(GLM.results$Beta)
+GLM.results$s.e.m. <- as.numeric(GLM.results$s.e.m.)
+GLM.results$OR <- as.numeric(GLM.results$OR)
+GLM.results$low95CI <- as.numeric(GLM.results$low95CI)
+GLM.results$up95CI <- as.numeric(GLM.results$up95CI)
+GLM.results$`T-value` <- as.numeric(GLM.results$`T-value`)
+GLM.results$`P-value` <- as.numeric(GLM.results$`P-value`)
+GLM.results$`r^2` <- as.numeric(GLM.results$`r^2`)
+GLM.results$`r^2_adj` <- as.numeric(GLM.results$`r^2_adj`)
+GLM.results$`AE_N` <- as.numeric(GLM.results$`AE_N`)
+GLM.results$`Model_N` <- as.numeric(GLM.results$`Model_N`)
+GLM.results$`Perc_Miss` <- as.numeric(GLM.results$`Perc_Miss`)
+
+```
+
+```{r CrossSec: Cytokines - linear regression MODEL2 RANK, writing}
+DT::datatable(GLM.results)
+
+# Save the data
+cat("Writing results to Excel-file...\n")
+### Univariate
+library(openxlsx)
+write.xlsx(GLM.results,
+           file = paste0(OUT_loc, "/",Today,".AEDB.CEA.Con.Multi.MCP1_Plaque.Cytokines_Plaques.RANK.MODEL2.xlsx"),
+           row.names = FALSE, col.names = TRUE, sheetName = "Con.Multi.PlaquePheno")
+# Removing intermediates
+cat("Removing intermediate files...\n")
+rm(TRAIT, trait, currentDF, GLM.results, GLM.results.TEMP, fit, model_step)
+
+
+```
+
+## MCP1 levels vs. vulnerability index
+
+Here we calculate the plaque instability/vulnerability index and visualize the MCP1 levels in plaque.
+
+```{r Plaque Vulnerability, message=FALSE, warning=FALSE}
+# Plaque vulnerability
+
+table(AEDB.CEA$Macrophages.bin)
+table(AEDB.CEA$Fat.bin_10)
+table(AEDB.CEA$Collagen.bin)
+table(AEDB.CEA$SMC.bin)
+table(AEDB.CEA$IPH.bin)
+
+# SPSS code
+
+# 
+# *** syntax- Plaque vulnerability**.
+# COMPUTE Macro_instab = -999.
+# IF macrophages.bin=2 Macro_instab=1.
+# IF macrophages.bin=1 Macro_instab=0.
+# EXECUTE.
+# 
+# COMPUTE Fat10_instab = -999.
+# IF Fat.bin_10=2 Fat10_instab=1.
+# IF Fat.bin_10=1 Fat10_instab=0.
+# EXECUTE.
+# 
+# COMPUTE coll_instab=-999.
+# IF Collagen.bin=2 coll_instab=0.
+# IF Collagen.bin=1 coll_instab=1.
+# EXECUTE.
+# 
+# 
+# COMPUTE SMC_instab=-999.
+# IF SMC.bin=2 SMC_instab=0.
+# IF SMC.bin=1 SMC_instab=1.
+# EXECUTE.
+# 
+# COMPUTE IPH_instab=-999.
+# IF IPH.bin=0 IPH_instab=0.
+# IF IPH.bin=1 IPH_instab=1.
+# EXECUTE.
+# 
+# COMPUTE Instability=Macro_instab + Fat10_instab +  coll_instab + SMC_instab + IPH_instab.
+# EXECUTE.
+
+# Fix plaquephenotypes
+attach(AEDB.CEA)
+# mac instability
+AEDB.CEA[,"MAC_Instability"] <- NA
+AEDB.CEA$MAC_Instability[Macrophages.bin == -999] <- NA
+AEDB.CEA$MAC_Instability[Macrophages.bin == "no/minor"] <- 0
+AEDB.CEA$MAC_Instability[Macrophages.bin == "moderate/heavy"] <- 1
+
+# fat instability
+AEDB.CEA[,"FAT10_Instability"] <- NA
+AEDB.CEA$FAT10_Instability[Fat.bin_10 == -999] <- NA
+AEDB.CEA$FAT10_Instability[Fat.bin_10 == " <10%"] <- 0
+AEDB.CEA$FAT10_Instability[Fat.bin_10 == " >10%"] <- 1
+
+# col instability 
+AEDB.CEA[,"COL_Instability"] <- NA
+AEDB.CEA$COL_Instability[Collagen.bin == -999] <- NA
+AEDB.CEA$COL_Instability[Collagen.bin == "no/minor"] <- 1
+AEDB.CEA$COL_Instability[Collagen.bin == "moderate/heavy"] <- 0
+
+# smc instability
+AEDB.CEA[,"SMC_Instability"] <- NA
+AEDB.CEA$SMC_Instability[SMC.bin == -999] <- NA
+AEDB.CEA$SMC_Instability[SMC.bin == "no/minor"] <- 1
+AEDB.CEA$SMC_Instability[SMC.bin == "moderate/heavy"] <- 0
+
+# iph instability
+AEDB.CEA[,"IPH_Instability"] <- NA
+AEDB.CEA$IPH_Instability[IPH.bin == -999] <- NA
+AEDB.CEA$IPH_Instability[IPH.bin == "no"] <- 0
+AEDB.CEA$IPH_Instability[IPH.bin == "yes"] <- 1
+
+detach(AEDB.CEA)
+
+table(AEDB.CEA$MAC_Instability, useNA = "ifany")
+table(AEDB.CEA$FAT10_Instability, useNA = "ifany")
+table(AEDB.CEA$COL_Instability, useNA = "ifany")
+table(AEDB.CEA$SMC_Instability, useNA = "ifany")
+table(AEDB.CEA$IPH_Instability, useNA = "ifany")
+
+# creating vulnerability index
+AEDB.CEA <- AEDB.CEA %>% mutate(Plaque_Vulnerability_Index = factor(rowSums(.[grep("_Instability", names(.))], na.rm = TRUE)),
+                                )
+
+table(AEDB.CEA$Plaque_Vulnerability_Index, useNA = "ifany")
+
+# str(AEDB.CEA$Plaque_Vulnerability_Index)
+
+```
+
+Here we plot the levels of inverse-rank normal transformed `MCP1` plaque levels from experiment 1 and 2 to the `Plaque vulnerability index`. 
+```{r Fix ORyearGroup, message=FALSE, warning=FALSE}
+library(sjlabelled)
+
+AEDB.CEA$yeartemp <- as.numeric(year(AEDB.CEA$dateok))
+
+attach(AEDB.CEA)
+
+AEDB.CEA[,"ORyearGroup"] <- NA
+AEDB.CEA$ORyearGroup[yeartemp <= 2007] <- "< 2007"
+AEDB.CEA$ORyearGroup[yeartemp > 2007] <- "> 2007"
+detach(AEDB.CEA)
+
+table(AEDB.CEA$ORyearGroup, AEDB.CEA$ORdate_year)
+```
+
+### Visualisations
+
+```{r MCP1 per PlaqueVulnerabilityIndex}
+# Global test
+compare_means(MCP1_pg_ml_2015_rank ~ Plaque_Vulnerability_Index,  data = AEDB.CEA, method = "kruskal.test")
+p1 <- ggpubr::ggboxplot(AEDB.CEA, 
+                  x = "Plaque_Vulnerability_Index",
+                  y = "MCP1_pg_ml_2015_rank", 
+                  xlab = "Plaque vulnerability index",
+                  ylab = "MCP1 plaque [pg/mL]\n(INT, exp 2)",
+                  color = "Plaque_Vulnerability_Index",
+                  palette = "npg",
+                  add = "jitter") +
+  stat_compare_means(label = "p.format",  method = "kruskal.test")
+ggpar(p1, legend = "bottom", legend.title = "Plaque vulnerability index")
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".MCP1.plaque.exp2_pgmL.PlaqueVulnerabilityIndex.pdf"), plot = last_plot())
+
+compare_means(MCP1_pg_ml_2015_rank ~ Plaque_Vulnerability_Index, group.by = "Gender", data = AEDB.CEA, method = "kruskal.test")
+p2 <- ggpubr::ggboxplot(AEDB.CEA, 
+                  x = "Plaque_Vulnerability_Index",
+                  y = "MCP1_pg_ml_2015_rank", 
+                  xlab = "Plaque vulnerability index by gender",
+                  ylab = "MCP1 plaque [pg/mL]\n(INT, exp 2)",
+                  color = "Gender",
+                  palette = c("#D5267B", "#1290D9"),
+                  add = "jitter") +
+  stat_compare_means(aes(group = Gender), label = "p.format",  method = "kruskal.test")
+ggpar(p2, legend = "bottom", legend.title = "Plaque vulnerability index")
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".MCP1.plaque.exp2_pgmL.PlaqueVulnerabilityIndex.byGender.pdf"), plot = last_plot())
+
+
+compare_means(MCP1_rank ~ Plaque_Vulnerability_Index,  data = AEDB.CEA, method = "kruskal.test")
+p3 <- ggpubr::ggboxplot(AEDB.CEA, 
+                  x = "Plaque_Vulnerability_Index",
+                  y = "MCP1_rank", 
+                  xlab = "Plaque vulnerability index",
+                  ylab = "MCP1 plaque [pg/mL]\n(INT, exp 1)",
+                  color = "Plaque_Vulnerability_Index",
+                  palette = "npg",
+                  add = "jitter") +
+  stat_compare_means(label = "p.format",  method = "kruskal.test")
+ggpar(p3, legend = "bottom", legend.title = "Plaque vulnerability index")
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".MCP1.plaque.exp1_pgmL.PlaqueVulnerabilityIndex.pdf"), plot = last_plot())
+
+compare_means(MCP1_rank ~ Plaque_Vulnerability_Index, group.by = "Gender", data = AEDB.CEA, method = "kruskal.test")
+p4 <- ggpubr::ggboxplot(AEDB.CEA, 
+                  x = "Plaque_Vulnerability_Index",
+                  y = "MCP1_rank", 
+                  xlab = "Plaque vulnerability index",
+                  ylab = "MCP1 plaque [pg/mL]\n(INT, exp 1)",
+                  color = "Gender",
+                  palette = c("#D5267B", "#1290D9"),
+                  add = "jitter") +
+  stat_compare_means(aes(group = Gender), label = "p.format",  method = "kruskal.test")
+ggpar(p4, legend = "bottom", legend.title = "Plaque vulnerability index")
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".MCP1.plaque.exp1_pgmL.PlaqueVulnerabilityIndex.byGender.pdf"), plot = last_plot())
+
+compare_means(MCP1_pg_ml_2015_rank ~ Plaque_Vulnerability_Index, data = AEDB.CEA, method = "kruskal.test")
+p5 <- ggpubr::ggboxplot(AEDB.CEA, 
+                  x = "Plaque_Vulnerability_Index",
+                  y = "MCP1_pg_ml_2015_rank", 
+                  xlab = "Plaque vulnerability index",
+                  ylab = "MCP1 plaque [pg/mL]\n(INT, exp 2)",
+                  color = "Plaque_Vulnerability_Index",
+                  palette = "npg",
+                  facet.by = "ORyearGroup",
+                  add = "jitter") +
+  stat_compare_means(label = "p.format",  method = "kruskal.test")
+ggpar(p5, legend = "bottom", legend.title = "Plaque vulnerability index")
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".MCP1.plaque.exp2_pgmL.PlaqueVulnerabilityIndex_Facet_byYear.pdf"), plot = last_plot())
+
+compare_means(MCP1_pg_ml_2015_rank ~ Plaque_Vulnerability_Index, group.by = "Gender", data = AEDB.CEA, method = "kruskal.test")
+p6 <- ggpubr::ggboxplot(AEDB.CEA, 
+                  x = "Plaque_Vulnerability_Index",
+                  y = "MCP1_pg_ml_2015_rank", 
+                  xlab = "Plaque vulnerability index",
+                  ylab = "MCP1 plaque [pg/mL]\n(INT, exp 2)",
+                  color = "Gender",
+                  palette = c("#D5267B", "#1290D9"),
+                  facet.by = "ORyearGroup",
+                  add = "jitter") +
+  stat_compare_means(aes(group = Gender), label = "p.format",  method = "kruskal.test")
+ggpar(p6, legend = "bottom", legend.title = "Plaque vulnerability index")
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".MCP1.plaque.exp2_pgmL.PlaqueVulnerabilityIndex_Facet_byYear.byGender.pdf"), plot = last_plot())
+
+
+compare_means(MCP1_rank ~ Plaque_Vulnerability_Index,  data = AEDB.CEA, method = "kruskal.test")
+p7 <- ggpubr::ggboxplot(AEDB.CEA, 
+                  x = "Plaque_Vulnerability_Index",
+                  y = "MCP1_rank", 
+                  xlab = "Plaque vulnerability index",
+                  ylab = "MCP1 plaque [pg/mL]\n(INT, exp 1)",
+                  color = "Plaque_Vulnerability_Index",
+                  palette = "npg",
+                  facet.by = "ORyearGroup",
+                  add = "jitter") +
+  stat_compare_means(label = "p.format",  method = "kruskal.test")
+ggpar(p7, legend = "bottom", legend.title = "Plaque vulnerability index")
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".MCP1.plaque.exp1_pgmL.PlaqueVulnerabilityIndex_Facet_byYear.pdf"), plot = last_plot())
+
+compare_means(MCP1_rank ~ Plaque_Vulnerability_Index, group.by = "Gender",   data = AEDB.CEA, method = "kruskal.test")
+p8 <- ggpubr::ggboxplot(AEDB.CEA, 
+                  x = "Plaque_Vulnerability_Index",
+                  y = "MCP1_rank", 
+                  xlab = "Plaque vulnerability index",
+                  ylab = "MCP1 plaque [pg/mL]\n(INT, exp 1)",
+                  color = "Gender",
+                  palette = "npg",
+                  facet.by = "ORyearGroup",
+                  add = "jitter") +
+  stat_compare_means(aes(group = Gender), label = "p.format",  method = "kruskal.test")
+ggpar(p8, legend = "bottom", legend.title = "Plaque vulnerability index")
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".MCP1.plaque.exp1_pgmL.PlaqueVulnerabilityIndex_Facet_byYear.pdf"), plot = last_plot())
+
+```
+
+
+
+### Model 1
+
+In this model we correct for _Age_, _Gender_, and _year of surgery_.
+
+Here we use the inverse-rank normalized data - visually this is more normally distributed.
+
+Analysis of the plaque vulnerability indez as a function of plaque MCP1 levels.
+```{r CrossSec: Plaque_Vulnerability_Index - ordinal regression MODEL1 RANK, paged.print=TRUE}
+TRAITS.PROTEIN.RANK.extra = c("MCP1_pg_ml_2015_rank",  "MCP1_rank")
+
+GLM.results <- data.frame(matrix(NA, ncol = 16, nrow = 0))
+for (protein in 1:length(TRAITS.PROTEIN.RANK.extra)) {
+  PROTEIN = TRAITS.PROTEIN.RANK.extra[protein]
+  cat(paste0("\nAnalysis of ",PROTEIN,".\n"))
+  TRAIT = "Plaque_Vulnerability_Index"
+    cat(paste0("\n- processing ",TRAIT,"\n\n"))
+    currentDF <- as.data.frame(AEDB.CEA %>%
+      dplyr::select(., PROTEIN, TRAIT, COVARIATES_M1, ORdate_epoch) %>%
+      filter(complete.cases(.))) %>%
+      filter_if(~is.numeric(.), all_vars(!is.infinite(.))) %>%
+      droplevels(.)
+    
+    # fix numeric OR year
+    currentDF$ORdate_year <- as.numeric(currentDF$ORdate_year)
+    
+    # for debug
+    # print(DT::datatable(currentDF))
+    # print(nrow(currentDF))
+    # print(str(currentDF))
+    # print(class(currentDF[,TRAIT]))
+    # table(currentDF$ORdate_year)
+    ### univariate
+     # + Hypertension.composite + DiabetesStatus + SmokerCurrent + 
+     #            Med.Statin.LLD + Med.all.antiplatelet + GFR_MDRD + BMI + 
+     #            CAD_history + Stroke_history + Peripheral.interv + stenose
+    fit <- polr(currentDF[,TRAIT] ~ currentDF[,PROTEIN] + Age + Gender + ORdate_year, 
+              data  =  currentDF, 
+              Hess = TRUE)
+    print(summary(fit))
+    
+    ## store table
+    (ctable <- coef(summary(fit)))
+
+    ## calculate and store p values
+    p <- pnorm(abs(ctable[, "t value"]), lower.tail = FALSE) * 2
+    
+    ## combined table
+    print((ctable <- cbind(ctable, "p value" = p)))
+  }
+
+
+```
+
+### Model 2
+
+In this model we correct for _Age_, _Gender_, _Hypertension status_, _Diabetes status_, _current smoker status_, _lipid-lowering drugs (LLDs)_, _antiplatelet medication_, _eGFR (MDRD)_, _BMI_, _MedHx_CVD_ (combination of _CAD history_, _stroke history_, and _peripheral interventions_), and _stenosis._.
+
+
+```{r CrossSec: Plaque_Vulnerability_Index - ordinal regression MODEL2 RANK, paged.print=TRUE}
+
+for (protein in 1:length(TRAITS.PROTEIN.RANK.extra)) {
+  PROTEIN = TRAITS.PROTEIN.RANK.extra[protein]
+  cat(paste0("\nAnalysis of ",PROTEIN,".\n"))
+  TRAIT = "Plaque_Vulnerability_Index"
+    cat(paste0("\n- processing ",TRAIT,"\n\n"))
+    currentDF <- as.data.frame(AEDB.CEA %>%
+      dplyr::select(., PROTEIN, TRAIT, COVARIATES_M2) %>%
+      filter(complete.cases(.))) %>%
+      filter_if(~is.numeric(.), all_vars(!is.infinite(.))) %>%
+      droplevels(.)
+    
+    # fix numeric OR year
+    currentDF$ORdate_year <- as.numeric(currentDF$ORdate_year)
+    
+    # for debug
+    # print(DT::datatable(currentDF))
+    # print(nrow(currentDF))
+    # print(str(currentDF))
+    # print(class(currentDF[,TRAIT]))
+    ### univariate
+
+    fit <- polr(as.factor(currentDF[,TRAIT]) ~ currentDF[,PROTEIN] + Age + Gender + ORdate_year + Hypertension.composite + DiabetesStatus + SmokerStatus + Med.Statin.LLD + Med.all.antiplatelet + GFR_MDRD + BMI + MedHx_CVD + stenose,
+              data  =  currentDF,
+              Hess = TRUE)
+    
+    print(summary(fit))
+    
+    ## store table
+    (ctable <- coef(summary(fit)))
+
+    ## calculate and store p values
+    p <- pnorm(abs(ctable[, "t value"]), lower.tail = FALSE) * 2
+    
+    ## combined table
+    print((ctable <- cbind(ctable, "p value" = p)))
+  }
+
+```
+
+
+# Session information
+
+------
+
+    Version:      v1.0.0
+    Last update:  2021-02-11
+    Written by:   Sander W. van der Laan (s.w.vanderlaan-2[at]umcutrecht.nl).
+    Description:  Script to analyse MCP1 from the Ather-Express Biobank Study.
+    Minimum requirements: R version 3.5.2 (2018-12-20) -- 'Eggshell Igloo', macOS Mojave (10.14.2).
+    
+    **MoSCoW To-Do List**
+    The things we Must, Should, Could, and Would have given the time we have.
+    _M_
+
+    _S_
+    
+    _C_
+    
+    
+    _W_
+    
+    
+    **Changes log**
+    * v1.0.0 Inital version.
+    
+
+------
+
+```{r eval = TRUE}
+sessionInfo()
+```
+
+# Saving environment
+```{r Saving}
+save.image(paste0(PROJECT_loc, "/",Today,".",PROJECTNAME,".additional_figures.RData"))
+```
+
+------
+<sup>&copy; 1979-2021 Sander W. van der Laan | s.w.vanderlaan-2[at]gmail.com | [swvanderlaan.github.io](https://swvanderlaan.github.io).</sup>
+------

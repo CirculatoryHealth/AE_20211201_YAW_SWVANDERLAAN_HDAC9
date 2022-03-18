@@ -30,6 +30,113 @@ install.packages.auto <- function(x) {
   }
 }
 
+
+################################################################################
+# (GENERAL) LINEAR/LOGISTIC MODELING
+################################################################################
+# Function to grep data from glm()/lm()
+
+### CONTINUOUS TRAITS
+GLM.CON <- function(fit, DATASET, x_name, y, verbose=c(TRUE,FALSE)){
+  cat("Analyzing in dataset '", DATASET ,"' the association of '", x_name ,"' with '", y ,"' .\n")
+  if (nrow(summary(fit)$coefficients) == 1) {
+    output = c(DATASET, x_name, y, rep(NA,8))
+    cat("Model not fitted; probably singular.\n")
+  }else {
+    cat("Collecting data.\n\n")
+    effectsize = summary(fit)$coefficients[2,1]
+    SE = summary(fit)$coefficients[2,2]
+    OReffect = exp(summary(fit)$coefficients[2,1])
+    CI_low = exp(effectsize - 1.96 * SE)
+    CI_up = exp(effectsize + 1.96 * SE)
+    tvalue = summary(fit)$coefficients[2,3]
+    pvalue = summary(fit)$coefficients[2,4]
+    R = summary(fit)$r.squared
+    R.adj = summary(fit)$adj.r.squared
+    sample_size = nrow(model.frame(fit))
+    N = study.samplesize
+    Perc_Miss = 100 - ((sample_size * 100)/N)
+    
+    output = c(DATASET, x_name, y, effectsize, SE, OReffect, CI_low, CI_up, tvalue, pvalue, R, R.adj, N, sample_size, Perc_Miss)
+    
+    if (verbose == TRUE) {
+      cat("We have collected the following and summarize it in an object:\n")
+      cat("Dataset...................:", DATASET, "\n")
+      cat("Score/Exposure/biomarker..:", x_name, "\n")
+      cat("Trait/outcome.............:", y, "\n")
+      cat("Effect size...............:", round(effectsize, 6), "\n")
+      cat("Standard error............:", round(SE, 6), "\n")
+      cat("Odds ratio (effect size)..:", round(OReffect, 3), "\n")
+      cat("Lower 95% CI..............:", round(CI_low, 3), "\n")
+      cat("Upper 95% CI..............:", round(CI_up, 3), "\n")
+      cat("T-value...................:", round(tvalue, 6), "\n")
+      cat("P-value...................:", signif(pvalue, 8), "\n")
+      cat("R^2.......................:", round(R, 6), "\n")
+      cat("Adjusted r^2..............:", round(R.adj, 6), "\n")
+      cat("Sample size of AE DB......:", N, "\n")
+      cat("Sample size of model......:", sample_size, "\n")
+      cat("Missing data %............:", round(Perc_Miss, 6), "\n")
+    } else {
+      cat("Collecting data in summary object.\n")
+    }
+  }
+  return(output)
+  print(output)
+}
+
+### BINARY TRAITS
+GLM.BIN <- function(fit, DATASET, x_name, y, verbose=c(TRUE,FALSE)){
+  cat("Analyzing in dataset '", DATASET ,"' the association of '", x_name ,"' with '", y ,"' ...\n")
+  if (nrow(summary(fit)$coefficients) == 1) {
+    output = c(DATASET, x_name, y, rep(NA,9))
+    cat("Model not fitted; probably singular.\n")
+  }else {
+    cat("Collecting data...\n")
+    effectsize = summary(fit)$coefficients[2,1]
+    SE = summary(fit)$coefficients[2,2]
+    OReffect = exp(summary(fit)$coefficients[2,1])
+    CI_low = exp(effectsize - 1.96 * SE)
+    CI_up = exp(effectsize + 1.96 * SE)
+    zvalue = summary(fit)$coefficients[2,3]
+    pvalue = summary(fit)$coefficients[2,4]
+    dev <- fit$deviance
+    nullDev <- fit$null.deviance
+    modelN <- length(fit$fitted.values)
+    R.l <- 1 - dev / nullDev
+    R.cs <- 1 - exp(-(nullDev - dev) / modelN)
+    R.n <- R.cs / (1 - (exp(-nullDev/modelN)))
+    sample_size = nrow(model.frame(fit))
+    N = study.samplesize
+    Perc_Miss = 100 - ((sample_size * 100)/N)
+    
+    output = c(DATASET, x_name, y, effectsize, SE, OReffect, CI_low, CI_up, zvalue, pvalue, R.l, R.cs, R.n, N, sample_size, Perc_Miss)
+    if (verbose == TRUE) {
+      cat("We have collected the following and summarize it in an object:\n")
+      cat("Dataset...................:", DATASET, "\n")
+      cat("Score/Exposure/biomarker..:", x_name, "\n")
+      cat("Trait/outcome.............:", y, "\n")
+      cat("Effect size...............:", round(effectsize, 6), "\n")
+      cat("Standard error............:", round(SE, 6), "\n")
+      cat("Odds ratio (effect size)..:", round(OReffect, 3), "\n")
+      cat("Lower 95% CI..............:", round(CI_low, 3), "\n")
+      cat("Upper 95% CI..............:", round(CI_up, 3), "\n")
+      cat("Z-value...................:", round(zvalue, 6), "\n")
+      cat("P-value...................:", signif(pvalue, 8), "\n")
+      cat("Hosmer and Lemeshow r^2...:", round(R.l, 6), "\n")
+      cat("Cox and Snell r^2.........:", round(R.cs, 6), "\n")
+      cat("Nagelkerke's pseudo r^2...:", round(R.n, 6), "\n")
+      cat("Sample size of AE DB......:", N, "\n")
+      cat("Sample size of model......:", sample_size, "\n")
+      cat("Missing data %............:", round(Perc_Miss, 6), "\n")
+    } else {
+      cat("Collecting data in summary object.\n")
+    }
+  }
+  return(output)
+  print(output)
+}
+
+
 ################################################################################
 # REGIONAL ASSOCIATION PLOTTING
 ################################################################################
