@@ -1,5 +1,5 @@
 ---
-title: "Plaque expression levels of _HDAC9_ in association with plaque vulnerability traits and secondary vascular events in patients undergoing carotid endarterectomy: an analysis in the Athero-EXPRESS Biobank."
+title: "Main analysis"
 author: "[Sander W. van der Laan, PhD](https://swvanderlaan.github.io) | @swvanderlaan | s.w.vanderlaan@gmail.com"
 date: "`r Sys.Date()`"
 output:
@@ -20,7 +20,7 @@ output:
       collapsed: no
       smooth_scroll: yes
 mainfont: Arial
-subtitle: "Athero-Express RNA sequencing preparation"
+subtitle: Accompanying 'Plaque expression levels of HDAC9 in association with plaque vulnerability traits and secondary vascular events in patients undergoing carotid endarterectomy, an analysis in the Athero-EXPRESS Biobank.'
 editor_options:
   chunk_output_type: inline
 # bibliography: references.bib
@@ -267,11 +267,11 @@ target_genes
 We simply load the previously saved `RDS`-file and extract the clinical and RNAseq data from that.
 
 ```{r LoadAEDB}
-AEDB.CEA <- readRDS(file = paste0(OUT_loc, "/20220317.HDAC9.AEDB.CEA.RDS"))
+AEDB.CEA <- readRDS(file = paste0(OUT_loc, "/20220319.",TRAIT_OF_INTEREST,".AEDB.CEA.RDS"))
 AEDB.CEA$STUDY_NUMBER <- paste0("ae", AEDB.CEA$STUDY_NUMBER)
 head(AEDB.CEA$STUDY_NUMBER)
 
-AERNASE <- readRDS(file = paste0(OUT_loc, "/20220318.AERNA.CEA.611pts.SE.after_qc.IC_academic.RDS"))
+AERNASE <- readRDS(file = paste0(OUT_loc, "/20220319.AERNA.CEA.623pts.SE.after_qc.IC_academic.RDS"))
 
 ```
 
@@ -658,8 +658,8 @@ We fix the *diabetes* status variable.
 attach(AEDB.CEA)
 AEDB.CEA[,"DiabetesStatus"] <- NA
 AEDB.CEA$DiabetesStatus[DM.composite == -999] <- NA
-AEDB.CEA$DiabetesStatus[DM.composite == 1] <- "Control (no Diabetes Dx/Med)"
-AEDB.CEA$DiabetesStatus[DM.composite == 2] <- "Diabetes"
+AEDB.CEA$DiabetesStatus[DM.composite == 0] <- "Control (no Diabetes Dx/Med)"
+AEDB.CEA$DiabetesStatus[DM.composite == 1] <- "Diabetes"
 detach(AEDB.CEA)
 
 table(AEDB.CEA$DM.composite, AEDB.CEA$DiabetesStatus)
@@ -686,8 +686,8 @@ We will also fix a history of CAD, stroke or peripheral intervention status vari
 # Fix diabetes
 attach(AEDB.CEA)
 AEDB.CEA[,"MedHx_CVD"] <- NA
-AEDB.CEA$MedHx_CVD[CAD_history == "No history CAD" | Stroke_history == 1 | Peripheral.interv == "no"] <- "No"
-AEDB.CEA$MedHx_CVD[CAD_history == "History CAD" | Stroke_history == 2 | Peripheral.interv == "yes"] <- "yes"
+AEDB.CEA$MedHx_CVD[CAD_history == "No history CAD" | Stroke_history == 0 | Peripheral.interv == "no"] <- "No"
+AEDB.CEA$MedHx_CVD[CAD_history == "History CAD" | Stroke_history == 1 | Peripheral.interv == "yes"] <- "yes"
 detach(AEDB.CEA)
 
 table(AEDB.CEA$CAD_history)
@@ -873,7 +873,7 @@ cat("Writing results to Excel-file...\n")
 ### Univariate
 library(openxlsx)
 write.xlsx(GLM.results,
-           file = paste0(OUT_loc, "/",Today,".AERNASE.clin.hdac9.Con.Uni.Protein.PlaquePhenotypes.RANK.MODEL1.xlsx"),
+           file = paste0(OUT_loc, "/",Today,".AERNASE.clin.hdac9.Con.Uni.",TRAIT_OF_INTEREST,".PlaquePhenotypes.RANK.MODEL1.xlsx"),
            rowNames = FALSE, colNames = TRUE, sheetName = "Con.Uni.PlaquePheno")
 
 # Removing intermediates
@@ -945,7 +945,7 @@ cat("Writing results to Excel-file...\n")
 
 ### Univariate
 write.xlsx(GLM.results,
-           file = paste0(OUT_loc, "/",Today,".AERNASE.clin.hdac9.Bin.Uni.Protein.PlaquePhenotypes.RANK.MODEL1.xlsx"),
+           file = paste0(OUT_loc, "/",Today,".AERNASE.clin.hdac9.Bin.Uni.",TRAIT_OF_INTEREST,".PlaquePhenotypes.RANK.MODEL1.xlsx"),
            rowNames = FALSE, colNames = TRUE, sheetName = "Bin.Uni.PlaquePheno")
 
 # Removing intermediates
@@ -988,6 +988,7 @@ for (target_of_interest in 1:length(TRAITS.TARGET.RANK)) {
     #             Med.Statin.LLD + Med.all.antiplatelet + GFR_MDRD + BMI + 
     #             MedHx_CVD + stenose, 
     #           data = currentDF)
+    
     fit <- lm(currentDF[,TARGET] ~ currentDF[,TRAIT] + Age + Gender + ORdate_epoch +
               Hypertension.composite + DiabetesStatus + SmokerStatus + 
               Med.Statin.LLD + Med.all.antiplatelet + GFR_MDRD + BMI + 
@@ -1028,7 +1029,7 @@ cat("Writing results to Excel-file...\n")
 ### Univariate
 library(openxlsx)
 write.xlsx(GLM.results,
-           file = paste0(OUT_loc, "/",Today,".AERNASE.clin.hdac9.Con.Multi.Protein.PlaquePhenotypes.RANK.MODEL2.xlsx"),
+           file = paste0(OUT_loc, "/",Today,".AERNASE.clin.hdac9.Con.Multi.",TRAIT_OF_INTEREST,".PlaquePhenotypes.RANK.MODEL2.xlsx"),
            rowNames = FALSE, colNames = TRUE, sheetName = "Con.Multi.PlaquePheno")
 # Removing intermediates
 cat("Removing intermediate files...\n")
@@ -1106,7 +1107,7 @@ cat("Writing results to Excel-file...\n")
 
 ### Univariate
 write.xlsx(GLM.results,
-           file = paste0(OUT_loc, "/",Today,".AERNASE.clin.hdac9.Bin.Multi.Protein.PlaquePhenotypes.RANK.MODEL2.xlsx"),
+           file = paste0(OUT_loc, "/",Today,".AERNASE.clin.hdac9.Bin.Multi.",TRAIT_OF_INTEREST,".PlaquePhenotypes.RANK.MODEL2.xlsx"),
            rowNames = FALSE, colNames = TRUE, sheetName = "Bin.Multi.PlaquePheno")
 
 # Removing intermediates
@@ -1191,7 +1192,7 @@ cat("Writing results to Excel-file...\n")
 
 ### Univariate
 write.xlsx(GLM.results,
-           file = paste0(OUT_loc, "/",Today,".AERNASE.clin.hdac9.Bin.Uni.Protein.RANK.Symptoms.MODEL1.xlsx"),
+           file = paste0(OUT_loc, "/",Today,".AERNASE.clin.hdac9.Bin.Uni.",TRAIT_OF_INTEREST,".RANK.Symptoms.MODEL1.xlsx"),
            rowNames = FALSE, colNames = TRUE, sheetName = "Bin.Uni.Symptoms")
 
 # Removing intermediates
@@ -1270,7 +1271,7 @@ cat("Writing results to Excel-file...\n")
 
 ### Univariate
 write.xlsx(GLM.results,
-           file = paste0(OUT_loc, "/",Today,".AERNASE.clin.hdac9.Bin.Multi.Protein.RANK.Symptoms.MODEL2.xlsx"),
+           file = paste0(OUT_loc, "/",Today,".AERNASE.clin.hdac9.Bin.Multi.",TRAIT_OF_INTEREST,".RANK.Symptoms.MODEL2.xlsx"),
            rowNames = FALSE, colNmes = TRUE, sheetName = "Bin.Multi.Symptoms")
 
 # Removing intermediates
@@ -2525,14 +2526,26 @@ ggpairs(AERNASE.clin.hdac9,
         progress = FALSE)
 
 ```
+# Saving datasets
+
+For the purpose of downstream analyses we save the `AEDB.CEA` object, and the _HDAC9_ objects.
+
+```{r}
+
+saveRDS(AEDB.CEA, file = paste0(OUT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".AEDB.CEA.withupdates.RDS"))
+saveRDS(AEDB.CEA, file = paste0(OUT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".AERNASE.clin.hdac9.df.RDS"))
+saveRDS(AEDB.CEA, file = paste0(OUT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".AERNASE.hdac9.se.RDS"))
+saveRDS(AEDB.CEA, file = paste0(OUT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".AERNASE.hdac9.genedata.RDS"))
+
+```
 
 
 # Session information
 
 --------------------------------------------------------------------------------
 
-    Version:      v1.0.0
-    Last update:  2021-03-18
+    Version:      v1.0.1
+    Last update:  2021-03-19
     Written by:   Sander W. van der Laan (s.w.vanderlaan-2[at]umcutrecht.nl).
     Description:  Script to analyse HDAC9 from the Ather-Express Biobank Study.
     Minimum requirements: R version 3.5.2 (2018-12-20) -- 'Eggshell Igloo', macOS Mojave (10.14.2).
@@ -2542,15 +2555,13 @@ ggpairs(AERNASE.clin.hdac9,
     _M_
 
     _S_
-    
-    _C_
-    
-    
-    _W_
-    
-    
-    **Changes log**
 
+    _C_
+
+    _W_
+
+    **Changes log**
+    * v1.0.1 Update to main AEDB (there is an error in the Age-variable in the new version). More patients in the bulk (623 vs 611 with the newer dataset).
     * v1.0.0 Inital version.
     
 
@@ -2565,8 +2576,8 @@ sessionInfo()
 save.image(paste0(PROJECT_loc, "/",Today,".",PROJECTNAME,".bulkRNAseq.main_analysis.RData"))
 ```
 
-+---------------------------------------------------------------------------------------------------------------------------------------+
-| <sup>© 1979-2022 Sander W. van der Laan | s.w.vanderlaan[at]gmail.com [swvanderlaan.github.io](https://swvanderlaan.github.io).</sup> |
-+---------------------------------------------------------------------------------------------------------------------------------------+
++-----------------------------------------------------------------------------------------------------------------------------------------+
+| <sup>© 1979-2022 Sander W. van der Laan | s.w.vanderlaan[at]gmail.com | [swvanderlaan.github.io](https://swvanderlaan.github.io).</sup> |
++-----------------------------------------------------------------------------------------------------------------------------------------+
 
 

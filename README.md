@@ -87,7 +87,7 @@ Furthermore, we will examine in longitudinal analyses the associations between _
 For the expression analysis we used carotid plaque-derived bulk RNAseq data and queried it for the gene list. Below a graph showing the overall expression of the genes (not all are in the data) compared to the mean expression of 1,000 randomly picked genes. 
 
 **Figure 1: Overall expression of target genes in carotid plaques from the Athero-Express Biobank Study**
-![Overall expression of target genes in carotid plaques from the Athero-Express Biobank Study](bulkRNAseq/AERNA/PLOTS/20210929.TargetExpression_vs_1000genes.png)
+![Overall expression of target genes in carotid plaques from the Athero-Express Biobank Study](HDAC9/PLOTS/20220319.TargetExpression_vs_1000genes.png)
 
 We assessed the correlation with plaque characteristics (mentioned above) and secondary major adverse cardiovascular events (MACE [major]) at 30 days and 3 years after CEA. 
 
@@ -97,11 +97,11 @@ We assessed the correlation with plaque characteristics (mentioned above) and se
 We projected target genes to the single-cell RNAseq data derived from 37 carotid plaque samples. We identified cell communities (Figure 2), mapped and projected target gene expression to the cell communities (Figure 3). 
 
 **Figure 2: Cell communities identified in carotid plaques from the Athero-Express Biobank Study**
-![Cell communities identified in carotid plaques from the Athero-Express Biobank Study](scRNAseq/AESCRNA/PLOTS/20210929.UMAP.png)
+![Cell communities identified in carotid plaques from the Athero-Express Biobank Study](HDAC9/PLOTS/20220319.UMAP.png)
 
 
 **Figure 3: Dotplot showing expression of target genes per cell type in carotid plaques from the Athero-Express Biobank Study**
-![Dotplot showing expression of target genes per cell type in carotid plaques from the Athero-Express Biobank Study](scRNAseq/AESCRNA/PLOTS/20210929.DotPlot.Targets.png)
+![Dotplot showing expression of target genes per cell type in carotid plaques from the Athero-Express Biobank Study](HDAC9/PLOTS/20220319.DotPlot.Targets.png)
 
 
 ### Statistical analysis 
@@ -206,10 +206,22 @@ The framework was based on the [`WORCS` package](https://osf.io/zcvbs/).
 
 #### Changes log
     
-    _Version:_      v1.1.0</br>
-    _Last update:_  2021-09-29</br>
+    _Version:_      v1.2.0</br>
+    _Last update:_  2022-03-19</br>
     _Written by:_   Sander W. van der Laan (s.w.vanderlaan-2[at]umcutrecht.nl).
-        
+    
+    MoSCoW To-Do List
+    The things we Must, Should, Could, and Would have given the time we have.
+    _M_
+
+    _S_
+
+    _C_
+
+    _W_
+
+    Changes log
+    * v1.2.0 Update to main AEDB (there is an error in the Age-variable in the new version). More patients in the bulk (623 vs 611 with the newer dataset). Cleaned up 'additional figures' script.
     * v1.1.0 Major update to WORCS system. 
     * v1.0.6 Small bug fixes. 
     * v1.0.5 Added png for overlap-figure.
@@ -221,9 +233,7 @@ The framework was based on the [`WORCS` package](https://osf.io/zcvbs/).
 
 ------------------------------------------------------------------------
 
-<sup> Copyright © 1979-2022 Sander W. van der Laan \| s.w.vanderlaan-2
-[at] umcutrecht [dot] nl. Creative Commons BY-NC-ND 4.0
-[license](LICENSE). </sup>
+<sup> Copyright © 1979-2022 Sander W. van der Laan \| s.w.vanderlaan[at]gmail.com \| [swvanderlaan.github.io](https://swvanderlaan.github.io). Creative Commons BY-NC-ND 4.0 [license](LICENSE). </sup>
 
 
 

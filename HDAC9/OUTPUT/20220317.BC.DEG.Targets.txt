@@ -1,2 +1,0 @@
-Gene	p_val	avg_log2FC	pct.1	pct.2	p_val_adj
-HDAC9	0.00182920405004263	-0.31628023178505	0.128	0.24	1

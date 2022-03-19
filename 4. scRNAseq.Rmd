@@ -1,5 +1,5 @@
 ---
-title: "Plaque expression levels of _HDAC9_ in association with plaque vulnerability traits and secondary vascular events in patients undergoing carotid endarterectomy: an analysis in the Athero-EXPRESS Biobank."
+title: "Mapping targets to single cells in plaques."
 author: "[Sander W. van der Laan, PhD](https://swvanderlaan.github.io) | @swvanderlaan | s.w.vanderlaan@gmail.com"
 date: "`r Sys.Date()`"
 output:
@@ -20,7 +20,7 @@ output:
       collapsed: no
       smooth_scroll: yes
 mainfont: Arial
-subtitle: "Athero-Express single-cell RNA sequencing analysis"
+subtitle: Accompanying 'Plaque expression levels of HDAC9 in association with plaque vulnerability traits and secondary vascular events in patients undergoing carotid endarterectomy, an analysis in the Athero-EXPRESS Biobank.'
 editor_options:
   chunk_output_type: inline
 # bibliography: references.bib
@@ -358,7 +358,7 @@ Loading the Athero-Express clinical data.
 
 ```{r LoadAEDB}
 
-AEDB.CEA <- readRDS(file = paste0(OUT_loc, "/20220317.HDAC9.AEDB.CEA.RDS"))
+AEDB.CEA <- readRDS(file = paste0(OUT_loc, "/20220319.",TRAIT_OF_INTEREST,".AEDB.CEA.RDS"))
 
 ```
 
@@ -528,7 +528,7 @@ require(openxlsx)
 #            format(scRNAseqDataMetaAE.all.tableOne, digits = 5, scientific = FALSE) , 
 #            rowNames = TRUE, colNames = TRUE, overwrite = TRUE)
 
-write.xlsx(file = paste0(BASELINE_loc, "/",Today,".",PROJECTNAME,".AESCRNA.CEA.39pts.after_qc.IC_academic.BaselineTable.xlsx"), 
+write.xlsx(file = paste0(BASELINE_loc, "/",Today,".",PROJECTNAME,".AESCRNA.CEA.32pts.after_qc.IC_academic.BaselineTable.xlsx"), 
            format(scRNAseqDataMetaAE.all.tableOne, digits = 5, scientific = FALSE) , 
            rowNames = TRUE, colNames = TRUE, overwrite = TRUE)
 
@@ -1374,13 +1374,24 @@ saveRDS(scRNAseqDataCEA39, file = paste0(OUT_loc, "/", Today, ".AESCRNA.CEA.39pt
 
 --------------------------------------------------------------------------------
 
-    Version:      v1.0.0
-    Last update:  2022-03-17
+    Version:      v1.0.1
+    Last update:  2022-03-19
     Written by:   Sander W. van der Laan (s.w.vanderlaan-2[at]umcutrecht.nl).
     Description:  Script to load single-cell RNA sequencing (scRNAseq) data, and perform quality control (QC), and initial mapping to cells.
     Minimum requirements: R version 3.5.2 (2018-12-20) -- 'Eggshell Igloo', macOS Mojave (10.14.2).
 
-    Change log
+    **MoSCoW To-Do List**
+    The things we Must, Should, Could, and Would have given the time we have.
+    _M_
+
+    _S_
+
+    _C_
+
+    _W_
+
+    **Changes log**
+    * v1.0.1 Update to main AEDB (there is an error in the Age-variable in the new version). Fewer patients in scRNAseq (32 vs 39 with the newer dataset).
     * v1.0.0 Initial version.
 
 --------------------------------------------------------------------------------

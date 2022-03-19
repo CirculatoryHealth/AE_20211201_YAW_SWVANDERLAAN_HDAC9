@@ -1,5 +1,5 @@
 ---
-title: "Plaque expression levels of _HDAC9_ in association with plaque vulnerability traits and secondary vascular events in patients undergoing carotid endarterectomy: an analysis in the Athero-EXPRESS Biobank."
+title: "Preparation"
 author: "[Sander W. van der Laan, PhD](https://swvanderlaan.github.io) | @swvanderlaan | s.w.vanderlaan@gmail.com"
 date: "`r Sys.Date()`"
 output:
@@ -20,7 +20,7 @@ output:
       collapsed: no
       smooth_scroll: yes
 mainfont: Arial
-subtitle: "Athero-Express RNA sequencing preparation"
+subtitle: Accompanying 'Plaque expression levels of HDAC9 in association with plaque vulnerability traits and secondary vascular events in patients undergoing carotid endarterectomy, an analysis in the Athero-EXPRESS Biobank.'
 editor_options:
   chunk_output_type: inline
 # bibliography: references.bib
@@ -354,6 +354,7 @@ cat("\nChecking existence of duplicate ENSEMBL IDs - there shouldn't be any.\n")
 id <- temp$ENSEMBL_gene_ID
 id[ id %in% id[duplicated(id)] ]
 rm(id)
+
 ```
 
 ```{r}
@@ -379,7 +380,7 @@ id[ id %in% id[duplicated(id)] ]
 Loading Athero-Express clinical data that we previously saved in an RDS file.
 
 ```{r LoadAEDB}
-AEDB.CEA <- readRDS(file = paste0(OUT_loc, "/20220317.HDAC9.AEDB.CEA.RDS"))
+AEDB.CEA <- readRDS(file = paste0(OUT_loc, "/20220319.",TRAIT_OF_INTEREST,".AEDB.CEA.RDS"))
 
 ```
 
@@ -571,7 +572,7 @@ cat("* loading data ...\n")
 
 # this is all the data passing RNAseq quality control and UMI-corrected
 # - includes 656 patients
-# - after filtering on informed consent and artery type, the end sample size should be 611
+# - after filtering on informed consent and artery type, the end sample size should be 632
 # - after filtering on 'no commercial business' based on informed consent, there are fewer samples: 608
 dim(bulkRNA_countsFilt)
 dim(counts)
@@ -581,9 +582,9 @@ head(counts)
 head(bulkRNA_countsFilt)
 
 cat("  > meta data\n")
-temp_coldat <- data.frame(STUDY_NUMBER = names(bulkRNA_countsFilt[,10:620]), 
+temp_coldat <- data.frame(STUDY_NUMBER = names(bulkRNA_countsFilt[,10:632]), 
                           SampleType = "plaque", RNAseqType = "3' RNAseq", 
-                          row.names = names(bulkRNA_countsFilt[,10:620]))
+                          row.names = names(bulkRNA_countsFilt[,10:632]))
 cat("  > clinical data\n")
 # bulkRNA_meta_clin_COMMERCIAL <- subset(bulkRNA_meta_clin, select = c("study_number", basetable_vars))
 bulkRNA_meta_clin_ACADEMIC <- subset(bulkRNA_meta_clin, select = c("study_number", basetable_vars))
@@ -1083,7 +1084,7 @@ temp <- as.tibble(subset(colData(AERNASE), select = c("STUDY_NUMBER", "SampleTyp
 # rm(temp)
 
 fwrite(temp,
-       file = paste0(OUT_loc, "/", Today, ".AERNA.CEA.611pts.samplelist.after_qc.IC_academic.csv"),
+       file = paste0(OUT_loc, "/", Today, ".AERNA.CEA.623pts.samplelist.after_qc.IC_academic.csv"),
        sep = ",", row.names = FALSE, col.names = TRUE,
        showProgress = TRUE)
 rm(temp)
@@ -1091,7 +1092,7 @@ rm(temp)
 temp <- as.tibble(colData(AERNASE))
 
 fwrite(temp,
-       file = paste0(OUT_loc, "/", Today, ".AERNA.CEA.611pts.clinicaldata.after_qc.IC_academic.csv"),
+       file = paste0(OUT_loc, "/", Today, ".AERNA.CEA.623pts.clinicaldata.after_qc.IC_academic.csv"),
        sep = ",", row.names = FALSE, col.names = TRUE,
        showProgress = TRUE)
 rm(temp)
@@ -1104,7 +1105,7 @@ rm(temp)
 AERNASE
 
 # saveRDS(AERNASE, file = paste0(OUT_loc, "/", Today, ".AERNA.CEA.608pts.SE.after_qc.IC_commercial.RDS"))
-saveRDS(AERNASE, file = paste0(OUT_loc, "/", Today, ".AERNA.CEA.611pts.SE.after_qc.IC_academic.RDS"))
+saveRDS(AERNASE, file = paste0(OUT_loc, "/", Today, ".AERNA.CEA.623pts.SE.after_qc.IC_academic.RDS"))
 
 ```
 
@@ -1114,7 +1115,7 @@ saveRDS(AERNASE, file = paste0(OUT_loc, "/", Today, ".AERNA.CEA.611pts.SE.after_
 --------------------------------------------------------------------------------
 
     Version:      v1.0.0
-    Last update:  2022-03-17
+    Last update:  2022-03-19
     Written by:   Sander W. van der Laan (s.w.vanderlaan-2[at]umcutrecht.nl).
     Description:  Script to load bulk RNA sequencing data, and perform gene expression analyses, and visualisations.
     Minimum requirements: R version 3.5.2 (2018-12-20) -- 'Eggshell Igloo', macOS Mojave (10.14.2).
@@ -1144,6 +1145,6 @@ sessionInfo()
 save.image(paste0(PROJECT_loc, "/",Today,".",PROJECTNAME,".bulkRNAseq.preparation.RData"))
 ```
 
-+---------------------------------------------------------------------------------------------------------------------------------------+
-| <sup>© 1979-2022 Sander W. van der Laan | s.w.vanderlaan[at]gmail.com [swvanderlaan.github.io](https://swvanderlaan.github.io).</sup> |
-+---------------------------------------------------------------------------------------------------------------------------------------+
++-----------------------------------------------------------------------------------------------------------------------------------------+
+| <sup>© 1979-2022 Sander W. van der Laan | s.w.vanderlaan[at]gmail.com | [swvanderlaan.github.io](https://swvanderlaan.github.io).</sup> |
++-----------------------------------------------------------------------------------------------------------------------------------------+
