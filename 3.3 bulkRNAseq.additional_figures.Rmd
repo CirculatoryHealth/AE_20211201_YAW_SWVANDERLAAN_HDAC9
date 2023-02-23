@@ -58,10 +58,7 @@ rm(list = ls())
 ```{r LocalSystem, echo = FALSE}
 ### Operating System Version
 ### MacBook Pro
-ROOT_loc = "/Users/swvanderlaan"
-
-### MacBook Air 
-# ROOT_loc = "/Users/slaan3"
+ROOT_loc = "/Users/slaan3"
 
 ### General
 GENOMIC_loc = paste0(ROOT_loc, "/OneDrive - UMC Utrecht/Genomics")
@@ -229,7 +226,6 @@ This notebook contains additional figures of the project "Plaque expression leve
 ```{r Loading project data}
 # load(paste0(PROJECT_loc, "/",Today,".",PROJECTNAME,".bulkRNAseq.main_analysis.RData"))
 load(paste0(PROJECT_loc, "/20220319.",PROJECTNAME,".bulkRNAseq.main_analysis.RData"))
-
 
 ```
 
@@ -1710,13 +1706,146 @@ for (protein in 1:length(TRAITS.TARGET.RANK.extra)) {
 
 ```
 
+## Plotting HDAC9 vs Fat 10% in the plaque
+
+```{r}
+# Global test
+compare_means(HDAC9 ~ Fat.bin_10,  data = AERNASE.clin.hdac9 %>% filter(!is.na(Fat.bin_10)), method = "kruskal.test")
+p1 <- ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(Fat.bin_10)), 
+                  x = "Fat.bin_10",
+                  y = "HDAC9", 
+                  xlab = "Fat <10% vs >10%",
+                  ylab = "HDAC9 (normalized expression)\n",
+                  color = "Fat.bin_10",
+                  palette = "npg",
+                  add = "jitter") +
+  stat_compare_means(label = "p.format",  method = "kruskal.test")
+ggpar(p1, legend = "bottom", legend.title = "Fat <10% vs >10%")
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.exp2_pgmL.Fat.bin_10.pdf"), plot = last_plot())
+```
+
+```{r}
+compare_means(HDAC9 ~ Fat.bin_10, group.by = "Gender", data = AERNASE.clin.hdac9 %>% filter(!is.na(Fat.bin_10)), method = "kruskal.test")
+p2 <- ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(Fat.bin_10)), 
+                  x = "Fat.bin_10",
+                  y = "HDAC9", 
+                  xlab = "Fat <10% vs >10% by gender",
+                  ylab = "HDAC9 (normalized expression)\n",
+                  color = "Gender",
+                  palette = c("#D5267B", "#1290D9"),
+                  add = "jitter") +
+  stat_compare_means(aes(group = Gender), label = "p.format",  method = "kruskal.test")
+ggpar(p2, legend = "bottom", legend.title = "Fat <10% vs >10% by gender")
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.exp2_pgmL.Fat.bin_10.byGender.pdf"), plot = last_plot())
+
+```
+
+```{r}
+compare_means(HDAC9 ~ Fat.bin_10, data = AERNASE.clin.hdac9 %>% filter(!is.na(Fat.bin_10)), method = "kruskal.test")
+p5 <- ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(Fat.bin_10)), 
+                  x = "Fat.bin_10",
+                  y = "HDAC9", 
+                  xlab = "Fat <10% vs >10% by year of surgery",
+                  ylab = "HDAC9 (normalized expression)\n",
+                  color = "Fat.bin_10",
+                  palette = "npg",
+                  facet.by = "ORyearGroup",
+                  add = "jitter") +
+  stat_compare_means(label = "p.format",  method = "kruskal.test")
+ggpar(p5, legend = "bottom", legend.title = "Fat <10% vs >10% by year of surgery")
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.exp2_pgmL.Fat.bin_10_Facet_byYear.pdf"), plot = last_plot())
+```
+
+```{r}
+compare_means(HDAC9 ~ Fat.bin_10, group.by = "Gender", data = AERNASE.clin.hdac9 %>% filter(!is.na(Fat.bin_10)), method = "kruskal.test")
+p6 <- ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(Fat.bin_10)), 
+                  x = "Fat.bin_10",
+                  y = "HDAC9", 
+                  xlab = "Fat <10% vs >10% by year of surgery and gender",
+                  ylab = "HDAC9 (normalized expression)\n",
+                  color = "Gender",
+                  palette = c("#D5267B", "#1290D9"),
+                  facet.by = "ORyearGroup",
+                  add = "jitter") +
+  stat_compare_means(aes(group = Gender), label = "p.format",  method = "kruskal.test")
+ggpar(p6, legend = "bottom", legend.title = "Fat <10% vs >10% by year of surgery and gender")
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.exp2_pgmL.Fat.bin_10_Facet_byYear.byGender.pdf"), plot = last_plot())
+```
+
+## Plotting HDAC9 vs Fat 40% in the plaque
+
+```{r}
+# Global test
+compare_means(HDAC9 ~ Fat.bin_40,  data = AERNASE.clin.hdac9 %>% filter(!is.na(Fat.bin_40)), method = "kruskal.test")
+p1 <- ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(Fat.bin_40)), 
+                  x = "Fat.bin_40",
+                  y = "HDAC9", 
+                  xlab = "Fat <40% vs >40%",
+                  ylab = "HDAC9 (normalized expression)\n",
+                  color = "Fat.bin_40",
+                  palette = "npg",
+                  add = "jitter") +
+  stat_compare_means(label = "p.format",  method = "kruskal.test")
+ggpar(p1, legend = "bottom", legend.title = "Fat <40% vs >40%")
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.exp2_pgmL.Fat.bin_40.pdf"), plot = last_plot())
+```
+
+```{r}
+compare_means(HDAC9 ~ Fat.bin_40, group.by = "Gender", data = AERNASE.clin.hdac9 %>% filter(!is.na(Fat.bin_40)), method = "kruskal.test")
+p2 <- ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(Fat.bin_40)), 
+                  x = "Fat.bin_40",
+                  y = "HDAC9", 
+                  xlab = "Fat <40% vs >40% by gender",
+                  ylab = "HDAC9 (normalized expression)\n",
+                  color = "Gender",
+                  palette = c("#D5267B", "#1290D9"),
+                  add = "jitter") +
+  stat_compare_means(aes(group = Gender), label = "p.format",  method = "kruskal.test")
+ggpar(p2, legend = "bottom", legend.title = "Fat <40% vs >40% by gender")
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.exp2_pgmL.Fat.bin_40.byGender.pdf"), plot = last_plot())
+
+```
+
+```{r}
+compare_means(HDAC9 ~ Fat.bin_40, data = AERNASE.clin.hdac9 %>% filter(!is.na(Fat.bin_40)), method = "kruskal.test")
+p5 <- ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(Fat.bin_40)), 
+                  x = "Fat.bin_40",
+                  y = "HDAC9", 
+                  xlab = "Fat <40% vs >40% by year of surgery",
+                  ylab = "HDAC9 (normalized expression)\n",
+                  color = "Fat.bin_40",
+                  palette = "npg",
+                  facet.by = "ORyearGroup",
+                  add = "jitter") +
+  stat_compare_means(label = "p.format",  method = "kruskal.test")
+ggpar(p5, legend = "bottom", legend.title = "Fat <40% vs >40% by year of surgery")
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.exp2_pgmL.Fat.bin_40_Facet_byYear.pdf"), plot = last_plot())
+```
+
+```{r}
+compare_means(HDAC9 ~ Fat.bin_40, group.by = "Gender", data = AERNASE.clin.hdac9 %>% filter(!is.na(Fat.bin_40)), method = "kruskal.test")
+p6 <- ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(Fat.bin_40)), 
+                  x = "Fat.bin_40",
+                  y = "HDAC9", 
+                  xlab = "Fat <40% vs >40% by year of surgery and gender",
+                  ylab = "HDAC9 (normalized expression)\n",
+                  color = "Gender",
+                  palette = c("#D5267B", "#1290D9"),
+                  facet.by = "ORyearGroup",
+                  add = "jitter") +
+  stat_compare_means(aes(group = Gender), label = "p.format",  method = "kruskal.test")
+ggpar(p6, legend = "bottom", legend.title = "Fat <40% vs >40% by year of surgery and gender")
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.exp2_pgmL.Fat.bin_40_Facet_byYear.byGender.pdf"), plot = last_plot())
+```
+
+
 
 # Session information
 
 --------------------------------------------------------------------------------
 
-    Version:      v1.0.0
-    Last update:  2021-03-19
+    Version:      v1.0.1
+    Last update:  2023-02-23
     Written by:   Sander W. van der Laan (s.w.vanderlaan-2[at]umcutrecht.nl).
     Description:  Script to analyse HDAC9 from the Ather-Express Biobank Study.
     Minimum requirements: R version 3.5.2 (2018-12-20) -- 'Eggshell Igloo', macOS Mojave (10.14.2).
@@ -1732,6 +1861,7 @@ for (protein in 1:length(TRAITS.TARGET.RANK.extra)) {
     _W_
 
     **Changes log**
+    * v1.0.1 Added figures on fat in the plaque.
     * v1.0.0 Inital version.
     
 
@@ -1747,7 +1877,7 @@ save.image(paste0(PROJECT_loc, "/",Today,".",PROJECTNAME,".bulkRNAseq.additional
 ```
 
 +-----------------------------------------------------------------------------------------------------------------------------------------+
-| <sup>© 1979-2022 Sander W. van der Laan | s.w.vanderlaan[at]gmail.com | [swvanderlaan.github.io](https://swvanderlaan.github.io).</sup> |
+| <sup>© 1979-2023 Sander W. van der Laan | s.w.vanderlaan[at]gmail.com | [swvanderlaan.github.io](https://swvanderlaan.github.io).</sup> |
 +-----------------------------------------------------------------------------------------------------------------------------------------+
 
 

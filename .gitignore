@@ -11,6 +11,7 @@
 # User-specific files
 .Ruserdata
 .Rproj.user
+.Rprofile
 
 # tag files
 tags
@@ -64,17 +65,6 @@ __pycache__
 # *.pdf
 *.sav
 *.sas7bdat
-*.fff
-*.log
-*.tex
-.Rhistory
-.Rprofile
-*.csv
-*.sav
-*.sas7bdat
-*.xlsx
-*.xls
-*.pdf
 *.fff
 *.log
 *.tex
