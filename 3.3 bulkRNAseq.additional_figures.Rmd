@@ -1544,11 +1544,20 @@ p1 <- ggpubr::ggboxplot(AERNASE.clin.hdac9,
                   ylab = "HDAC9 (normalized expression)\n",
                   color = "Plaque_Vulnerability_Index",
                   palette = "npg",
-                  add = "jitter") +
-  stat_compare_means(label = "p.format",  method = "kruskal.test")
+                  add = "jitter", 
+                  add.params = list(size = 2, jitter = 0.2)) +
+  stat_compare_means(label = "p.format",  method = "kruskal.test") +
+  font("xlab", size = 17) +
+  font("ylab", size = 17) +
+  font("xy.text", size = 16) +
+  font("legend.title", face = "bold") 
+  
 ggpar(p1, legend = "bottom", legend.title = "Plaque vulnerability index")
-ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.exp2_pgmL.PlaqueVulnerabilityIndex.pdf"), plot = last_plot())
 
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.exp2_pgmL.PlaqueVulnerabilityIndex.pdf"), plot = last_plot())
+```
+
+```{r}
 compare_means(HDAC9 ~ Plaque_Vulnerability_Index, group.by = "Gender", data = AERNASE.clin.hdac9, method = "kruskal.test")
 p2 <- ggpubr::ggboxplot(AERNASE.clin.hdac9, 
                   x = "Plaque_Vulnerability_Index",
@@ -1562,8 +1571,9 @@ p2 <- ggpubr::ggboxplot(AERNASE.clin.hdac9,
 ggpar(p2, legend = "bottom", legend.title = "Plaque vulnerability index")
 ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.exp2_pgmL.PlaqueVulnerabilityIndex.byGender.pdf"), plot = last_plot())
 
+```
 
-
+```{r}
 
 compare_means(HDAC9 ~ Plaque_Vulnerability_Index, data = AERNASE.clin.hdac9, method = "kruskal.test")
 p5 <- ggpubr::ggboxplot(AERNASE.clin.hdac9, 
@@ -1578,7 +1588,9 @@ p5 <- ggpubr::ggboxplot(AERNASE.clin.hdac9,
   stat_compare_means(label = "p.format",  method = "kruskal.test")
 ggpar(p5, legend = "bottom", legend.title = "Plaque vulnerability index")
 ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.exp2_pgmL.PlaqueVulnerabilityIndex_Facet_byYear.pdf"), plot = last_plot())
+```
 
+```{r}
 compare_means(HDAC9 ~ Plaque_Vulnerability_Index, group.by = "Gender", data = AERNASE.clin.hdac9, method = "kruskal.test")
 p6 <- ggpubr::ggboxplot(AERNASE.clin.hdac9, 
                   x = "Plaque_Vulnerability_Index",
@@ -1592,8 +1604,6 @@ p6 <- ggpubr::ggboxplot(AERNASE.clin.hdac9,
   stat_compare_means(aes(group = Gender), label = "p.format",  method = "kruskal.test")
 ggpar(p6, legend = "bottom", legend.title = "Plaque vulnerability index")
 ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.exp2_pgmL.PlaqueVulnerabilityIndex_Facet_byYear.byGender.pdf"), plot = last_plot())
-
-
 
 ```
 
@@ -1839,13 +1849,146 @@ ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.ex
 ```
 
 
+## Plotting HDAC9 vs IPH in the plaque
+
+```{r}
+# Global test
+compare_means(HDAC9 ~ IPH.bin,  data = AERNASE.clin.hdac9 %>% filter(!is.na(IPH.bin)), method = "kruskal.test")
+p1 <- ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(IPH.bin)), 
+                  x = "IPH.bin",
+                  y = "HDAC9", 
+                  xlab = "Intraplaque hemorrhage (no vs. yes)",
+                  ylab = "HDAC9 (normalized expression)\n",
+                  color = "IPH.bin",
+                  palette = "npg",
+                  add = "jitter") +
+  stat_compare_means(label = "p.format",  method = "kruskal.test")
+ggpar(p1, legend = "bottom", legend.title = "IPH")
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.exp2_pgmL.IPH.bin.pdf"), plot = last_plot())
+```
+
+```{r}
+compare_means(HDAC9 ~ IPH.bin, group.by = "Gender", data = AERNASE.clin.hdac9 %>% filter(!is.na(IPH.bin)), method = "kruskal.test")
+p2 <- ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(IPH.bin)), 
+                  x = "IPH.bin",
+                  y = "HDAC9", 
+                  xlab = "Intraplaque hemorrhage (no vs. yes) by gender",
+                  ylab = "HDAC9 (normalized expression)\n",
+                  color = "Gender",
+                  palette = c("#D5267B", "#1290D9"),
+                  add = "jitter") +
+  stat_compare_means(aes(group = Gender), label = "p.format",  method = "kruskal.test")
+ggpar(p2, legend = "bottom", legend.title = "IPH by gender")
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.exp2_pgmL.IPH.bin.byGender.pdf"), plot = last_plot())
+
+```
+
+```{r}
+compare_means(HDAC9 ~ IPH.bin, data = AERNASE.clin.hdac9 %>% filter(!is.na(IPH.bin)), method = "kruskal.test")
+p5 <- ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(IPH.bin)), 
+                  x = "IPH.bin",
+                  y = "HDAC9", 
+                  xlab = "Intraplaque hemorrhage (no vs. yes) by year of surgery",
+                  ylab = "HDAC9 (normalized expression)\n",
+                  color = "IPH.bin",
+                  palette = "npg",
+                  facet.by = "ORyearGroup",
+                  add = "jitter") +
+  stat_compare_means(label = "p.format",  method = "kruskal.test")
+ggpar(p5, legend = "bottom", legend.title = "IPH by year of surgery")
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.exp2_pgmL.IPH.bin_Facet_byYear.pdf"), plot = last_plot())
+```
+
+```{r}
+compare_means(HDAC9 ~ IPH.bin, group.by = "Gender", data = AERNASE.clin.hdac9 %>% filter(!is.na(IPH.bin)), method = "kruskal.test")
+p6 <- ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(IPH.bin)), 
+                  x = "IPH.bin",
+                  y = "HDAC9", 
+                  xlab = "Intraplaque hemorrhage (no vs. yes) by year of surgery and gender",
+                  ylab = "HDAC9 (normalized expression)\n",
+                  color = "Gender",
+                  palette = c("#D5267B", "#1290D9"),
+                  facet.by = "ORyearGroup",
+                  add = "jitter") +
+  stat_compare_means(aes(group = Gender), label = "p.format",  method = "kruskal.test")
+ggpar(p6, legend = "bottom", legend.title = "IPH by year of surgery and gender")
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.exp2_pgmL.IPH.bin_Facet_byYear.byGender.pdf"), plot = last_plot())
+```
+
+## Plotting HDAC9 vs Calcification in the plaque
+
+```{r}
+# Global test
+compare_means(HDAC9 ~ Calc.bin,  data = AERNASE.clin.hdac9 %>% filter(!is.na(Calc.bin)), method = "kruskal.test")
+p1 <- ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(Calc.bin)), 
+                  x = "Calc.bin",
+                  y = "HDAC9", 
+                  xlab = "Calcification (no/minor vs. moderate/heavy)",
+                  ylab = "HDAC9 (normalized expression)\n",
+                  color = "Calc.bin",
+                  palette = "npg",
+                  add = "jitter") +
+  stat_compare_means(label = "p.format",  method = "kruskal.test")
+ggpar(p1, legend = "bottom", legend.title = "Calcification")
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.exp2_pgmL.Calc.bin.pdf"), plot = last_plot())
+```
+
+```{r}
+compare_means(HDAC9 ~ Calc.bin, group.by = "Gender", data = AERNASE.clin.hdac9 %>% filter(!is.na(Calc.bin)), method = "kruskal.test")
+p2 <- ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(Calc.bin)), 
+                  x = "Calc.bin",
+                  y = "HDAC9", 
+                  xlab = "Calcification (no/minor vs. moderate/heavy) by gender",
+                  ylab = "HDAC9 (normalized expression)\n",
+                  color = "Gender",
+                  palette = c("#D5267B", "#1290D9"),
+                  add = "jitter") +
+  stat_compare_means(aes(group = Gender), label = "p.format",  method = "kruskal.test")
+ggpar(p2, legend = "bottom", legend.title = "Calcification by gender")
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.exp2_pgmL.Calc.bin.byGender.pdf"), plot = last_plot())
+
+```
+
+```{r}
+compare_means(HDAC9 ~ Calc.bin, data = AERNASE.clin.hdac9 %>% filter(!is.na(Calc.bin)), method = "kruskal.test")
+p5 <- ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(Calc.bin)), 
+                  x = "Calc.bin",
+                  y = "HDAC9", 
+                  xlab = "Calcification (no/minor vs. moderate/heavy) by year of surgery",
+                  ylab = "HDAC9 (normalized expression)\n",
+                  color = "Calc.bin",
+                  palette = "npg",
+                  facet.by = "ORyearGroup",
+                  add = "jitter") +
+  stat_compare_means(label = "p.format",  method = "kruskal.test")
+ggpar(p5, legend = "bottom", legend.title = "Calcification by year of surgery")
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.exp2_pgmL.Calc.bin_Facet_byYear.pdf"), plot = last_plot())
+```
+
+```{r}
+compare_means(HDAC9 ~ Calc.bin, group.by = "Gender", data = AERNASE.clin.hdac9 %>% filter(!is.na(Calc.bin)), method = "kruskal.test")
+p6 <- ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(Calc.bin)), 
+                  x = "Calc.bin",
+                  y = "HDAC9", 
+                  xlab = "Calcification (no/minor vs. moderate/heavy) by year of surgery and gender",
+                  ylab = "HDAC9 (normalized expression)\n",
+                  color = "Gender",
+                  palette = c("#D5267B", "#1290D9"),
+                  facet.by = "ORyearGroup",
+                  add = "jitter") +
+  stat_compare_means(aes(group = Gender), label = "p.format",  method = "kruskal.test")
+ggpar(p6, legend = "bottom", legend.title = "Calcification by year of surgery and gender")
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.exp2_pgmL.Calc.bin_Facet_byYear.byGender.pdf"), plot = last_plot())
+```
+
+
 
 # Session information
 
 --------------------------------------------------------------------------------
 
-    Version:      v1.0.1
-    Last update:  2023-02-23
+    Version:      v1.0.2
+    Last update:  2023-03-01
     Written by:   Sander W. van der Laan (s.w.vanderlaan-2[at]umcutrecht.nl).
     Description:  Script to analyse HDAC9 from the Ather-Express Biobank Study.
     Minimum requirements: R version 3.5.2 (2018-12-20) -- 'Eggshell Igloo', macOS Mojave (10.14.2).
@@ -1861,6 +2004,7 @@ ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.ex
     _W_
 
     **Changes log**
+    * v1.0.2 Changed the PVI-plot.
     * v1.0.1 Added figures on fat in the plaque.
     * v1.0.0 Inital version.
     
