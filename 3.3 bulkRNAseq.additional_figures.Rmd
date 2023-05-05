@@ -1,6 +1,6 @@
 ---
 title: "Additional Figures"
-author: '[Sander W. van der Laan, PhD](https://swvanderlaan.github.io) | @swvanderlaan.'
+author: '[Sander W. van der Laan, PhD](https://vanderlaan.science) | s.w.vanderlaan@gmail.com.'
 date: '`r Sys.Date()`'
 output:
   html_notebook: 
@@ -1557,6 +1557,82 @@ ggpar(p1, legend = "bottom", legend.title = "Plaque vulnerability index")
 ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.exp2_pgmL.PlaqueVulnerabilityIndex.pdf"), plot = last_plot())
 ```
 
+```{r }
+# Global test
+compare_means(HDAC9 ~ Plaque_Vulnerability_Index,  data = AERNASE.clin.hdac9, method = "kruskal.test")
+
+p1 <- ggpubr::ggbarplot(AERNASE.clin.hdac9, 
+                  x = "Plaque_Vulnerability_Index",
+                  y = "HDAC9", 
+                  xlab = "Plaque vulnerability index",
+                  ylab = "HDAC9 (normalized expression)\n",
+                  col = "Plaque_Vulnerability_Index",
+                  fill = "Plaque_Vulnerability_Index",
+                  palette = "npg",
+                  add = "median_iqr", error.plot = "upper_errorbar") +
+  stat_compare_means(label = "p.format",  method = "kruskal.test",
+                     label.x = 1, label.y = 50) +
+  font("xlab", size = 17) +
+  font("ylab", size = 17) +
+  font("xy.text", size = 16) +
+  font("legend.title", face = "bold") 
+  
+ggpar(p1, legend = "bottom", legend.title = "Plaque vulnerability index", ylim = c(0, 55))
+
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.exp2_pgmL.PlaqueVulnerabilityIndex.BarPlot.median_iqr.pdf"), plot = last_plot())
+
+compare_means(HDAC9 ~ Plaque_Vulnerability_Index,  data = AERNASE.clin.hdac9, method = "kruskal.test")
+```
+
+```{r}
+p1 <- ggpubr::ggbarplot(AERNASE.clin.hdac9, 
+                  x = "Plaque_Vulnerability_Index",
+                  y = "HDAC9", 
+                  xlab = "Plaque vulnerability index",
+                  ylab = "HDAC9 (normalized expression)\n",
+                  col = "Plaque_Vulnerability_Index",
+                  fill = "Plaque_Vulnerability_Index",
+                  palette = "npg",
+                  add = "mean_se", error.plot = "upper_errorbar") +
+  stat_compare_means(label = "p.format",  method = "kruskal.test",
+                     label.x = 1, label.y = 50) +
+  font("xlab", size = 17) +
+  font("ylab", size = 17) +
+  font("xy.text", size = 16) +
+  font("legend.title", face = "bold") 
+  
+ggpar(p1, legend = "bottom", legend.title = "Plaque vulnerability index", ylim = c(0, 55))
+
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.exp2_pgmL.PlaqueVulnerabilityIndex.BarPlot.means_se.pdf"), plot = last_plot())
+
+```
+
+
+```{r}
+compare_means(HDAC9 ~ Plaque_Vulnerability_Index,  data = subset(AERNASE.clin.hdac9, HDAC9 <100), method = "kruskal.test")
+
+p1 <- ggpubr::ggboxplot(subset(AERNASE.clin.hdac9, HDAC9 <100) , 
+                  x = "Plaque_Vulnerability_Index",
+                  y = "HDAC9", 
+                  xlab = "Plaque vulnerability index",
+                  ylab = "HDAC9 (normalized expression)\noutliers above 100 are removed",
+                  col = "Plaque_Vulnerability_Index",
+                  fill = "Plaque_Vulnerability_Index",
+                  palette = "npg",
+                  add = "boxplot", error.plot = "crossbar") +
+  stat_compare_means(label = "p.format",  method = "kruskal.test",
+                     label.x = 1, label.y = 50) +
+  font("xlab", size = 17) +
+  font("ylab", size = 17) +
+  font("xy.text", size = 16) +
+  font("legend.title", face = "bold") 
+  
+ggpar(p1, legend = "bottom", legend.title = "Plaque vulnerability index")
+
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.exp2_pgmL.PlaqueVulnerabilityIndex.Boxplot.outlier_above_100_removed.pdf"), plot = last_plot())
+
+```
+
 ```{r}
 compare_means(HDAC9 ~ Plaque_Vulnerability_Index, group.by = "Gender", data = AERNASE.clin.hdac9, method = "kruskal.test")
 p2 <- ggpubr::ggboxplot(AERNASE.clin.hdac9, 
@@ -1987,8 +2063,8 @@ ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.ex
 
 --------------------------------------------------------------------------------
 
-    Version:      v1.0.2
-    Last update:  2023-03-01
+    Version:      v1.0.3
+    Last update:  2023-05-05
     Written by:   Sander W. van der Laan (s.w.vanderlaan-2[at]umcutrecht.nl).
     Description:  Script to analyse HDAC9 from the Ather-Express Biobank Study.
     Minimum requirements: R version 3.5.2 (2018-12-20) -- 'Eggshell Igloo', macOS Mojave (10.14.2).
@@ -2004,6 +2080,7 @@ ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.ex
     _W_
 
     **Changes log**
+    * v1.0.3 Small adaptations to PVI-plots.
     * v1.0.2 Changed the PVI-plot.
     * v1.0.1 Added figures on fat in the plaque.
     * v1.0.0 Inital version.
@@ -2021,7 +2098,7 @@ save.image(paste0(PROJECT_loc, "/",Today,".",PROJECTNAME,".bulkRNAseq.additional
 ```
 
 +-----------------------------------------------------------------------------------------------------------------------------------------+
-| <sup>© 1979-2023 Sander W. van der Laan | s.w.vanderlaan[at]gmail.com | [swvanderlaan.github.io](https://swvanderlaan.github.io).</sup> |
+| <sup>© 1979-2023 Sander W. van der Laan | s.w.vanderlaan[at]gmail.com | [vanderlaan.science](https://vanderlaan.science).</sup> |
 +-----------------------------------------------------------------------------------------------------------------------------------------+
 
 
