@@ -1554,7 +1554,7 @@ p1 <- ggpubr::ggboxplot(AERNASE.clin.hdac9,
   
 ggpar(p1, legend = "bottom", legend.title = "Plaque vulnerability index")
 
-ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.exp2_pgmL.PlaqueVulnerabilityIndex.pdf"), plot = last_plot())
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.PlaqueVulnerabilityIndex.pdf"), plot = last_plot())
 ```
 
 ```{r }
@@ -1579,7 +1579,7 @@ p1 <- ggpubr::ggbarplot(AERNASE.clin.hdac9,
   
 ggpar(p1, legend = "bottom", legend.title = "Plaque vulnerability index", ylim = c(0, 55))
 
-ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.exp2_pgmL.PlaqueVulnerabilityIndex.BarPlot.median_iqr.pdf"), plot = last_plot())
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.PlaqueVulnerabilityIndex.BarPlot.median_iqr.pdf"), plot = last_plot())
 
 compare_means(HDAC9 ~ Plaque_Vulnerability_Index,  data = AERNASE.clin.hdac9, method = "kruskal.test")
 ```
@@ -1603,7 +1603,7 @@ p1 <- ggpubr::ggbarplot(AERNASE.clin.hdac9,
   
 ggpar(p1, legend = "bottom", legend.title = "Plaque vulnerability index", ylim = c(0, 55))
 
-ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.exp2_pgmL.PlaqueVulnerabilityIndex.BarPlot.means_se.pdf"), plot = last_plot())
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.PlaqueVulnerabilityIndex.BarPlot.means_se.pdf"), plot = last_plot())
 
 ```
 
@@ -1629,7 +1629,7 @@ p1 <- ggpubr::ggboxplot(subset(AERNASE.clin.hdac9, HDAC9 <100) ,
   
 ggpar(p1, legend = "bottom", legend.title = "Plaque vulnerability index")
 
-ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.exp2_pgmL.PlaqueVulnerabilityIndex.Boxplot.outlier_above_100_removed.pdf"), plot = last_plot())
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.PlaqueVulnerabilityIndex.Boxplot.outlier_above_100_removed.pdf"), plot = last_plot())
 
 ```
 
@@ -1653,7 +1653,7 @@ p1 <- ggpubr::ggboxplot(AERNASE.clin.hdac9,
   
 ggpar(p1, legend = "bottom", legend.title = "Plaque vulnerability index")
 
-ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.exp2_pgmL.FacetByPlaqueVulnerabilityIndex.pdf"), plot = last_plot())
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.FacetByPlaqueVulnerabilityIndex.pdf"), plot = last_plot())
 ```
 
 
@@ -1669,7 +1669,7 @@ p2 <- ggpubr::ggboxplot(AERNASE.clin.hdac9,
                   add = "jitter") +
   stat_compare_means(aes(group = Gender), label = "p.format",  method = "kruskal.test")
 ggpar(p2, legend = "bottom", legend.title = "Plaque vulnerability index")
-ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.exp2_pgmL.PlaqueVulnerabilityIndex.byGender.pdf"), plot = last_plot())
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.PlaqueVulnerabilityIndex.byGender.pdf"), plot = last_plot())
 
 ```
 
@@ -1687,7 +1687,7 @@ p5 <- ggpubr::ggboxplot(AERNASE.clin.hdac9,
                   add = "jitter") +
   stat_compare_means(label = "p.format",  method = "kruskal.test")
 ggpar(p5, legend = "bottom", legend.title = "Plaque vulnerability index")
-ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.exp2_pgmL.PlaqueVulnerabilityIndex_Facet_byYear.pdf"), plot = last_plot())
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.PlaqueVulnerabilityIndex_Facet_byYear.pdf"), plot = last_plot())
 ```
 
 ```{r}
@@ -1703,7 +1703,7 @@ p6 <- ggpubr::ggboxplot(AERNASE.clin.hdac9,
                   add = "jitter") +
   stat_compare_means(aes(group = Gender), label = "p.format",  method = "kruskal.test")
 ggpar(p6, legend = "bottom", legend.title = "Plaque vulnerability index")
-ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.exp2_pgmL.PlaqueVulnerabilityIndex_Facet_byYear.byGender.pdf"), plot = last_plot())
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.PlaqueVulnerabilityIndex_Facet_byYear.byGender.pdf"), plot = last_plot())
 
 ```
 
@@ -1890,7 +1890,7 @@ p1 <- ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(Fat.bin_10)),
                   add = "jitter") +
   stat_compare_means(label = "p.format",  method = "kruskal.test")
 ggpar(p1, legend = "bottom", legend.title = "Fat <10% vs >10%")
-ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.exp2_pgmL.Fat.bin_10.pdf"), plot = last_plot())
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.Fat.bin_10.pdf"), plot = last_plot())
 ```
 
 ```{r}
@@ -1905,7 +1905,7 @@ p2 <- ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(Fat.bin_10)),
                   add = "jitter") +
   stat_compare_means(aes(group = Gender), label = "p.format",  method = "kruskal.test")
 ggpar(p2, legend = "bottom", legend.title = "Fat <10% vs >10% by gender")
-ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.exp2_pgmL.Fat.bin_10.byGender.pdf"), plot = last_plot())
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.Fat.bin_10.byGender.pdf"), plot = last_plot())
 
 ```
 
@@ -1922,7 +1922,7 @@ p5 <- ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(Fat.bin_10)),
                   add = "jitter") +
   stat_compare_means(label = "p.format",  method = "kruskal.test")
 ggpar(p5, legend = "bottom", legend.title = "Fat <10% vs >10% by year of surgery")
-ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.exp2_pgmL.Fat.bin_10_Facet_byYear.pdf"), plot = last_plot())
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.Fat.bin_10_Facet_byYear.pdf"), plot = last_plot())
 ```
 
 ```{r}
@@ -1938,7 +1938,7 @@ p6 <- ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(Fat.bin_10)),
                   add = "jitter") +
   stat_compare_means(aes(group = Gender), label = "p.format",  method = "kruskal.test")
 ggpar(p6, legend = "bottom", legend.title = "Fat <10% vs >10% by year of surgery and gender")
-ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.exp2_pgmL.Fat.bin_10_Facet_byYear.byGender.pdf"), plot = last_plot())
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.Fat.bin_10_Facet_byYear.byGender.pdf"), plot = last_plot())
 ```
 
 ## Plotting HDAC9 vs Fat 40 perc. in the plaque
@@ -1956,7 +1956,7 @@ p1 <- ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(Fat.bin_40)),
                   add = "jitter") +
   stat_compare_means(label = "p.format",  method = "kruskal.test")
 ggpar(p1, legend = "bottom", legend.title = "Fat <40% vs >40%")
-ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.exp2_pgmL.Fat.bin_40.pdf"), plot = last_plot())
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.Fat.bin_40.pdf"), plot = last_plot())
 ```
 
 ```{r}
@@ -1971,7 +1971,7 @@ p2 <- ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(Fat.bin_40)),
                   add = "jitter") +
   stat_compare_means(aes(group = Gender), label = "p.format",  method = "kruskal.test")
 ggpar(p2, legend = "bottom", legend.title = "Fat <40% vs >40% by gender")
-ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.exp2_pgmL.Fat.bin_40.byGender.pdf"), plot = last_plot())
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.Fat.bin_40.byGender.pdf"), plot = last_plot())
 
 ```
 
@@ -1988,7 +1988,7 @@ p5 <- ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(Fat.bin_40)),
                   add = "jitter") +
   stat_compare_means(label = "p.format",  method = "kruskal.test")
 ggpar(p5, legend = "bottom", legend.title = "Fat <40% vs >40% by year of surgery")
-ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.exp2_pgmL.Fat.bin_40_Facet_byYear.pdf"), plot = last_plot())
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.Fat.bin_40_Facet_byYear.pdf"), plot = last_plot())
 ```
 
 ```{r}
@@ -2004,7 +2004,7 @@ p6 <- ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(Fat.bin_40)),
                   add = "jitter") +
   stat_compare_means(aes(group = Gender), label = "p.format",  method = "kruskal.test")
 ggpar(p6, legend = "bottom", legend.title = "Fat <40% vs >40% by year of surgery and gender")
-ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.exp2_pgmL.Fat.bin_40_Facet_byYear.byGender.pdf"), plot = last_plot())
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.Fat.bin_40_Facet_byYear.byGender.pdf"), plot = last_plot())
 ```
 
 
@@ -2023,7 +2023,7 @@ p1 <- ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(IPH.bin)),
                   add = "jitter") +
   stat_compare_means(label = "p.format",  method = "kruskal.test")
 ggpar(p1, legend = "bottom", legend.title = "IPH")
-ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.exp2_pgmL.IPH.bin.pdf"), plot = last_plot())
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.IPH.bin.pdf"), plot = last_plot())
 ```
 
 ```{r}
@@ -2038,7 +2038,7 @@ p2 <- ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(IPH.bin)),
                   add = "jitter") +
   stat_compare_means(aes(group = Gender), label = "p.format",  method = "kruskal.test")
 ggpar(p2, legend = "bottom", legend.title = "IPH by gender")
-ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.exp2_pgmL.IPH.bin.byGender.pdf"), plot = last_plot())
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.IPH.bin.byGender.pdf"), plot = last_plot())
 
 ```
 
@@ -2055,7 +2055,7 @@ p5 <- ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(IPH.bin)),
                   add = "jitter") +
   stat_compare_means(label = "p.format",  method = "kruskal.test")
 ggpar(p5, legend = "bottom", legend.title = "IPH by year of surgery")
-ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.exp2_pgmL.IPH.bin_Facet_byYear.pdf"), plot = last_plot())
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.IPH.bin_Facet_byYear.pdf"), plot = last_plot())
 ```
 
 ```{r}
@@ -2071,7 +2071,7 @@ p6 <- ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(IPH.bin)),
                   add = "jitter") +
   stat_compare_means(aes(group = Gender), label = "p.format",  method = "kruskal.test")
 ggpar(p6, legend = "bottom", legend.title = "IPH by year of surgery and gender")
-ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.exp2_pgmL.IPH.bin_Facet_byYear.byGender.pdf"), plot = last_plot())
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.IPH.bin_Facet_byYear.byGender.pdf"), plot = last_plot())
 ```
 
 ## Plotting HDAC9 vs Calcification in the plaque
@@ -2089,7 +2089,7 @@ p1 <- ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(Calc.bin)),
                   add = "jitter") +
   stat_compare_means(label = "p.format",  method = "kruskal.test")
 ggpar(p1, legend = "bottom", legend.title = "Calcification")
-ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.exp2_pgmL.Calc.bin.pdf"), plot = last_plot())
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.Calc.bin.pdf"), plot = last_plot())
 ```
 
 ```{r}
@@ -2104,7 +2104,7 @@ p2 <- ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(Calc.bin)),
                   add = "jitter") +
   stat_compare_means(aes(group = Gender), label = "p.format",  method = "kruskal.test")
 ggpar(p2, legend = "bottom", legend.title = "Calcification by gender")
-ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.exp2_pgmL.Calc.bin.byGender.pdf"), plot = last_plot())
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.Calc.bin.byGender.pdf"), plot = last_plot())
 
 ```
 
@@ -2121,7 +2121,7 @@ p5 <- ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(Calc.bin)),
                   add = "jitter") +
   stat_compare_means(label = "p.format",  method = "kruskal.test")
 ggpar(p5, legend = "bottom", legend.title = "Calcification by year of surgery")
-ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.exp2_pgmL.Calc.bin_Facet_byYear.pdf"), plot = last_plot())
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.Calc.bin_Facet_byYear.pdf"), plot = last_plot())
 ```
 
 ```{r}
@@ -2137,7 +2137,7 @@ p6 <- ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(Calc.bin)),
                   add = "jitter") +
   stat_compare_means(aes(group = Gender), label = "p.format",  method = "kruskal.test")
 ggpar(p6, legend = "bottom", legend.title = "Calcification by year of surgery and gender")
-ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.exp2_pgmL.Calc.bin_Facet_byYear.byGender.pdf"), plot = last_plot())
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.Calc.bin_Facet_byYear.byGender.pdf"), plot = last_plot())
 ```
 
 
