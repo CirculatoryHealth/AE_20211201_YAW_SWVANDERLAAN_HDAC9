@@ -944,6 +944,7 @@ Now we can draw some graphs of plaque target(s) levels per symptom group as medi
 # ?ggpubr::ggboxplot()
 my_comparisons <- list(c("Asymptomatic", "Symptomatic"))
 
+compare_means(HDAC9 ~ AsymptSympt2G, data = AERNASE.clin.hdac9, method = "kruskal.test")
 p1 <- ggpubr::ggboxplot(AERNASE.clin.hdac9, 
                   x = "AsymptSympt2G", y = "HDAC9",
                   title = "HDAC9 (normalized expression) levels per symptom", 
@@ -961,7 +962,9 @@ ggpar(p1, legend = c("right"), legend.title = "Symptoms")
 ggsave(file = paste0(PLOT_loc, "/",Today,".AERNASE.clin.hdac9.",TRAIT_OF_INTEREST,".plaque.AsymptSympt2G.pdf"), plot = last_plot())
 
 rm(p1)
+```
 
+```{r per SymptomGroups by Gender}
 compare_means(HDAC9 ~ AsymptSympt2G, group.by = "Gender", data = AERNASE.clin.hdac9, method = "kruskal.test")
 p1 <- ggpubr::ggboxplot(AERNASE.clin.hdac9, 
                   x = "AsymptSympt2G", y = "HDAC9",
@@ -982,6 +985,57 @@ rm(p1)
 
 ```
 
+### Alternative graph
+```{r}
+# ?ggpubr::ggboxplot()
+# compare_means(LRCH1 ~ eGFRGroup, data = AERNASE.clin %>% filter(!is.na(eGFRGroup)), method = "kruskal.test")
+# ggpubr::ggboxplot(AERNASE.clin %>% filter(!is.na(eGFRGroup))
+
+cat("Get summary statistics for target:\n")
+summary(AERNASE.clin.hdac9$HDAC9)
+
+cat("\nCount number of values > 100 for target:\n")
+sum(AERNASE.clin.hdac9$HDAC9 > 100)
+
+cat("\nSetting values > 100 for target to 100.\n")
+temp <- AERNASE.clin.hdac9 %>% 
+  filter(!is.na(AsymptSympt2G))
+
+temp$HDAC9[temp$HDAC9 > 100] <- 100
+
+cat("Get summary statistics for target after fixing values:\n")
+summary(temp$HDAC9)
+
+```
+
+
+```{r}
+my_comparisons <- list(c("Asymptomatic", "Symptomatic"))
+
+compare_means(HDAC9 ~ AsymptSympt2G, data = temp, method = "kruskal.test")
+
+p1 <- ggpubr::ggboxplot(temp, 
+                  x = "AsymptSympt2G", y = "HDAC9",
+                  title = "HDAC9 (normalized expression) levels per symptom", 
+                  xlab = "Symptoms",
+                  ylab = "HDAC9 (normalized expression)",
+                  color = "AsymptSympt2G", 
+                  # palette = c(uithof_color[16], uithof_color[23]),
+                  palette = "npg",
+                  add = "jitter", # Add dotplot
+                  add.params = list(binwidth = 0.1, dotsize = 0.3)
+          ) +
+  stat_compare_means(comparisons = my_comparisons, method = "wilcox.test")
+ggpar(p1, legend = c("right"), legend.title = "Symptoms")
+
+ggsave(file = paste0(PLOT_loc, "/",Today,".AERNASE.clin.",TRAIT_OF_INTEREST,".HDAC9.plaque.AsymptSympt2G.noNA_limitCount100.pdf"), plot = last_plot())
+ggsave(file = paste0(PLOT_loc, "/",Today,".AERNASE.clin.",TRAIT_OF_INTEREST,".HDAC9.plaque.AsymptSympt2G.noNA_limitCount100.ps"), plot = last_plot())
+ggsave(file = paste0(PLOT_loc, "/",Today,".AERNASE.clin.",TRAIT_OF_INTEREST,".HDAC9.plaque.AsymptSympt2G.noNA_limitCount100.png"), plot = last_plot())
+
+rm(p1, temp)
+```
+
+
 
 ## Forest plots
 
@@ -991,6 +1045,7 @@ library(ggplot2)
 library(openxlsx)
 model1_target <- read.xlsx(paste0(OUT_loc, "/", Today, ".AERNASE.clin.hdac9.Bin.Uni.",TRAIT_OF_INTEREST,".RANK.Symptoms.MODEL1.xlsx"))
 model2_target <- read.xlsx(paste0(OUT_loc, "/", Today, ".AERNASE.clin.hdac9.Bin.Multi.",TRAIT_OF_INTEREST,".RANK.Symptoms.MODEL2.xlsx"))
+
 model1_target$model <- "univariate"
 model2_target$model <- "multivariate"
 
@@ -1014,7 +1069,7 @@ fp <- ggplot(data = dat, aes(x = group, y = cen, ymin = low, ymax = high)) +
   geom_hline(yintercept = 1, lty = 2) +  # add a dotted line at x=1 after flip
   coord_flip(ylim = c(0.8, 1.7)) +  # flip coordinates (puts labels on y axis)
   xlab("Model") + ylab("OR (95% CI) for symptomatic plaques") +
-  ggtitle("Plaque MCP-1 levels (1 SD increment, exp. #2, n = 1190+)") +
+  ggtitle("Normalized HDAC9 expression") +
   theme_minimal()  # use a white background
 print(fp)
 
@@ -2146,8 +2201,8 @@ ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.Ca
 
 --------------------------------------------------------------------------------
 
-    Version:      v1.0.4
-    Last update:  2023-05-11
+    Version:      v1.0.5
+    Last update:  2023-05-31
     Written by:   Sander W. van der Laan (s.w.vanderlaan-2[at]umcutrecht.nl).
     Description:  Script to analyse HDAC9 from the Ather-Express Biobank Study.
     Minimum requirements: R version 3.5.2 (2018-12-20) -- 'Eggshell Igloo', macOS Mojave (10.14.2).
@@ -2163,6 +2218,7 @@ ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.Ca
     _W_
 
     **Changes log**
+    * v1.0.5 Fixed forest plot and alternative boxplot for symptoms.
     * v1.0.4 Made histogram of PVI. Exported HDAC9 and PVI data.
     * v1.0.3 Small adaptations to PVI-plots.
     * v1.0.2 Changed the PVI-plot.

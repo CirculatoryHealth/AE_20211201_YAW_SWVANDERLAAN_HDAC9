@@ -58,10 +58,7 @@ rm(list = ls())
 ```{r LocalSystem, echo = FALSE}
 ### Operating System Version
 ### MacBook Pro
-ROOT_loc = "/Users/swvanderlaan"
-
-### MacBook Air 
-# ROOT_loc = "/Users/slaan3"
+ROOT_loc = "/Users/slaan3"
 
 ### General
 GENOMIC_loc = paste0(ROOT_loc, "/OneDrive - UMC Utrecht/Genomics")
@@ -724,7 +721,7 @@ AERNASE.clin.hdac9$DiabetesStatus <- as_factor(AERNASE.clin.hdac9$DiabetesStatus
 ```
 
 
-```{r CrossSec: plaques - setup regression }
+```{r}
 
 study.samplesize = nrow(AERNASE.clin.hdac9) # study.samplesize is an expected variable in the GLM.BIN() GLM.CON() functions
 
@@ -799,6 +796,7 @@ str(AERNASE.clin.hdac9)
 # COVARIATES_M4 = c(COVARIATES_M2, "hsCRP_plasma")
 
 ```
+
 
 ### Model 1
 
@@ -2544,8 +2542,8 @@ saveRDS(AEDB.CEA, file = paste0(OUT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".AER
 
 --------------------------------------------------------------------------------
 
-    Version:      v1.0.1
-    Last update:  2021-03-19
+    Version:      v1.0.2
+    Last update:  2023-05-31
     Written by:   Sander W. van der Laan (s.w.vanderlaan-2[at]umcutrecht.nl).
     Description:  Script to analyse HDAC9 from the Ather-Express Biobank Study.
     Minimum requirements: R version 3.5.2 (2018-12-20) -- 'Eggshell Igloo', macOS Mojave (10.14.2).
@@ -2561,6 +2559,7 @@ saveRDS(AEDB.CEA, file = paste0(OUT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".AER
     _W_
 
     **Changes log**
+    * v1.0.2 Fix the output for the modeling of symptoms.
     * v1.0.1 Update to main AEDB (there is an error in the Age-variable in the new version). More patients in the bulk (623 vs 611 with the newer dataset).
     * v1.0.0 Inital version.
     
@@ -2577,7 +2576,7 @@ save.image(paste0(PROJECT_loc, "/",Today,".",PROJECTNAME,".bulkRNAseq.main_analy
 ```
 
 +-----------------------------------------------------------------------------------------------------------------------------------------+
-| <sup>© 1979-2022 Sander W. van der Laan | s.w.vanderlaan[at]gmail.com | [swvanderlaan.github.io](https://swvanderlaan.github.io).</sup> |
+| <sup>© 1979-2023 Sander W. van der Laan | s.w.vanderlaan[at]gmail.com | [swvanderlaan.github.io](https://swvanderlaan.github.io).</sup> |
 +-----------------------------------------------------------------------------------------------------------------------------------------+
 
 
