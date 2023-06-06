@@ -23,8 +23,8 @@ mainfont: Helvetica
 subtitle: Accompanying 'Plaque expression levels of HDAC9 in association with plaque vulnerability traits and secondary vascular events in patients undergoing carotid endarterectomy, an analysis in the Athero-EXPRESS Biobank.'
 editor_options:
   chunk_output_type: inline
-# bibliography: references.bib
-# knit: worcs::cite_all
+bibliography: references.bib
+knit: worcs::cite_all
 ---
 # General Setup
 
@@ -56,63 +56,7 @@ rm(list = ls())
 ```
 
 ```{r LocalSystem, echo = FALSE}
-### Operating System Version
-### MacBook Pro
-ROOT_loc = "/Users/slaan3"
-
-### General
-GENOMIC_loc = paste0(ROOT_loc, "/OneDrive - UMC Utrecht/Genomics")
-AEDB_loc = paste0(GENOMIC_loc, "/Athero-Express/AE-AAA_GS_DBs")
-LAB_loc = paste0(GENOMIC_loc, "/LabBusiness")
-
-PROJECT_loc = paste0(ROOT_loc, "/git/CirculatoryHealth/AE_20211201_YAW_SWVANDERLAAN_HDAC9")
-
-# Genetic and genomic data
-STORAGE_loc = paste0(ROOT_loc, "/PLINK")
-AERNA_loc = paste0(STORAGE_loc, "/_AE_ORIGINALS/AERNA")
-AESCRNA_loc = paste0(STORAGE_loc, "/_AE_ORIGINALS/AESCRNA/prepped_data")
-AEGSQC_loc = paste0(STORAGE_loc, "/_AE_ORIGINALS/AEGS_COMBINED_QC2018")
-
-### SOME VARIABLES WE NEED DOWN THE LINE
-TRAIT_OF_INTEREST = "HDAC9" # Phenotype
-PROJECTNAME = "HDAC9"
-
-cat("\nCreate a new analysis directory...\n")
-ifelse(!dir.exists(file.path(PROJECT_loc, "/",PROJECTNAME)), 
-       dir.create(file.path(PROJECT_loc, "/",PROJECTNAME)), 
-       FALSE)
-ANALYSIS_loc = paste0(PROJECT_loc,"/",PROJECTNAME)
-
-ifelse(!dir.exists(file.path(ANALYSIS_loc, "/PLOTS")), 
-       dir.create(file.path(ANALYSIS_loc, "/PLOTS")), 
-       FALSE)
-PLOT_loc = paste0(ANALYSIS_loc,"/PLOTS")
-
-ifelse(!dir.exists(file.path(PLOT_loc, "/QC")), 
-       dir.create(file.path(PLOT_loc, "/QC")), 
-       FALSE)
-QC_loc = paste0(PLOT_loc,"/QC")
-
-ifelse(!dir.exists(file.path(ANALYSIS_loc, "/OUTPUT")), 
-       dir.create(file.path(ANALYSIS_loc, "/OUTPUT")), 
-       FALSE)
-OUT_loc = paste0(ANALYSIS_loc, "/OUTPUT")
-
-ifelse(!dir.exists(file.path(ANALYSIS_loc, "/BASELINE")), 
-       dir.create(file.path(ANALYSIS_loc, "/BASELINE")), 
-       FALSE)
-BASELINE_loc = paste0(ANALYSIS_loc, "/BASELINE")
-
-ifelse(!dir.exists(file.path(ANALYSIS_loc, "/COX")), 
-       dir.create(file.path(ANALYSIS_loc, "/COX")), 
-       FALSE)
-COX_loc = paste0(ANALYSIS_loc, "/COX")
-
-
-
-setwd(paste0(PROJECT_loc))
-getwd()
-list.files()
+source("scripts/local.system.R")
 
 ```
 
@@ -121,98 +65,12 @@ source(paste0(PROJECT_loc, "/scripts/functions.R"))
 ```
 
 ```{r Setting: loading_packages, message=FALSE, warning=FALSE}
-install.packages.auto("readr")
-install.packages.auto("optparse")
-install.packages.auto("tools")
-install.packages.auto("dplyr")
-install.packages.auto("tidyr")
-install.packages.auto("naniar")
-
-# To get 'data.table' with 'fwrite' to be able to directly write gzipped-files
-# Ref: https://stackoverflow.com/questions/42788401/is-possible-to-use-fwrite-from-data-table-with-gzfile
-# install.packages("data.table", repos = "https://Rdatatable.gitlab.io/data.table")
-library(data.table)
-
-install.packages.auto("tidyverse")
-install.packages.auto("knitr")
-install.packages.auto("DT")
-install.packages.auto("MASS")
-# install.packages.auto("Seurat") # latest version
-
-# Install the devtools package from Hadley Wickham
-install.packages.auto('devtools')
-
-install.packages.auto("haven")
-install.packages.auto("sjlabelled")
-install.packages.auto("sjPlot")
-install.packages.auto("labelled")
-install.packages.auto("tableone")
-
-install.packages.auto("ggpubr")
+source(paste0(PROJECT_loc, "/scripts/pack01.packages.R"))
 
 ```
 
 ```{r Setting: Colors, include = FALSE}
-
-Today = format(as.Date(as.POSIXlt(Sys.time())), "%Y%m%d")
-Today.Report = format(as.Date(as.POSIXlt(Sys.time())), "%A, %B %d, %Y")
-
-### UtrechtScienceParkColoursScheme
-###
-### WebsitetoconvertHEXtoRGB:http://hex.colorrrs.com.
-### Forsomefunctionsyoushoulddividethesenumbersby255.
-### 
-###	No.	Color			      HEX	(RGB)						              CHR		  MAF/INFO
-###---------------------------------------------------------------------------------------
-###	1	  yellow			    #FBB820 (251,184,32)				      =>	1		or 1.0>INFO
-###	2	  gold			      #F59D10 (245,157,16)				      =>	2		
-###	3	  salmon			    #E55738 (229,87,56)				      =>	3		or 0.05<MAF<0.2 or 0.4<INFO<0.6
-###	4	  darkpink		    #DB003F ((219,0,63)				      =>	4		
-###	5	  lightpink		    #E35493 (227,84,147)				      =>	5		or 0.8<INFO<1.0
-###	6	  pink			      #D5267B (213,38,123)				      =>	6		
-###	7	  hardpink		    #CC0071 (204,0,113)				      =>	7		
-###	8	  lightpurple	    #A8448A (168,68,138)				      =>	8		
-###	9	  purple			    #9A3480 (154,52,128)				      =>	9		
-###	10	lavendel		    #8D5B9A (141,91,154)				      =>	10		
-###	11	bluepurple		  #705296 (112,82,150)				      =>	11		
-###	12	purpleblue		  #686AA9 (104,106,169)			      =>	12		
-###	13	lightpurpleblue	#6173AD (97,115,173/101,120,180)	=>	13		
-###	14	seablue			    #4C81BF (76,129,191)				      =>	14		
-###	15	skyblue			    #2F8BC9 (47,139,201)				      =>	15		
-###	16	azurblue		    #1290D9 (18,144,217)				      =>	16		or 0.01<MAF<0.05 or 0.2<INFO<0.4
-###	17	lightazurblue	  #1396D8 (19,150,216)				      =>	17		
-###	18	greenblue		    #15A6C1 (21,166,193)				      =>	18		
-###	19	seaweedgreen	  #5EB17F (94,177,127)				      =>	19		
-###	20	yellowgreen		  #86B833 (134,184,51)				      =>	20		
-###	21	lightmossgreen	#C5D220 (197,210,32)				      =>	21		
-###	22	mossgreen		    #9FC228 (159,194,40)				      =>	22		or MAF>0.20 or 0.6<INFO<0.8
-###	23	lightgreen	  	#78B113 (120,177,19)				      =>	23/X
-###	24	green			      #49A01D (73,160,29)				      =>	24/Y
-###	25	grey			      #595A5C (89,90,92)				        =>	25/XY	or MAF<0.01 or 0.0<INFO<0.2
-###	26	lightgrey		    #A2A3A4	(162,163,164)			      =>	26/MT
-###
-###	ADDITIONAL COLORS
-###	27	midgrey			#D7D8D7
-###	28	verylightgrey	#ECECEC"
-###	29	white			#FFFFFF
-###	30	black			#000000
-###----------------------------------------------------------------------------------------------
-
-uithof_color = c("#FBB820","#F59D10","#E55738","#DB003F","#E35493","#D5267B",
-                 "#CC0071","#A8448A","#9A3480","#8D5B9A","#705296","#686AA9",
-                 "#6173AD","#4C81BF","#2F8BC9","#1290D9","#1396D8","#15A6C1",
-                 "#5EB17F","#86B833","#C5D220","#9FC228","#78B113","#49A01D",
-                 "#595A5C","#A2A3A4", "#D7D8D7", "#ECECEC", "#FFFFFF", "#000000")
-
-uithof_color_legend = c("#FBB820", "#F59D10", "#E55738", "#DB003F", "#E35493",
-                        "#D5267B", "#CC0071", "#A8448A", "#9A3480", "#8D5B9A",
-                        "#705296", "#686AA9", "#6173AD", "#4C81BF", "#2F8BC9",
-                        "#1290D9", "#1396D8", "#15A6C1", "#5EB17F", "#86B833",
-                        "#C5D220", "#9FC228", "#78B113", "#49A01D", "#595A5C",
-                        "#A2A3A4", "#D7D8D7", "#ECECEC", "#FFFFFF", "#000000")
-
-
-### ----------------------------------------------------------------------------
+source(paste0(PROJECT_loc, "/scripts/colors.R"))
 ```
 
 
@@ -226,6 +84,12 @@ This notebook contains additional figures of the project "Plaque expression leve
 ```{r Loading project data}
 # load(paste0(PROJECT_loc, "/",Today,".",PROJECTNAME,".bulkRNAseq.main_analysis.RData"))
 load(paste0(PROJECT_loc, "/20220319.",PROJECTNAME,".bulkRNAseq.main_analysis.RData"))
+```
+
+```{r}
+source("/Users/slaan3/git/CirculatoryHealth/AE_20211201_YAW_SWVANDERLAAN_HDAC9/scripts/local.system.R")
+Today = format(as.Date(as.POSIXlt(Sys.time())), "%Y%m%d")
+Today.Report = format(as.Date(as.POSIXlt(Sys.time())), "%A, %B %d, %Y")
 
 ```
 
@@ -242,6 +106,27 @@ AERNASE.clin.hdac9 <- merge(AERNASE.clin.hdac9,
                             by.x = "STUDY_NUMBER", by.y = "STUDY_NUMBER", sort = TRUE, all.x = TRUE)
 ```
 
+
+# Fix counts
+
+We limit the maximum count at 100. 
+```{r}
+# ?ggpubr::ggboxplot()
+# compare_means(LRCH1 ~ eGFRGroup, data = AERNASE.clin %>% filter(!is.na(eGFRGroup)), method = "kruskal.test")
+# ggpubr::ggboxplot(AERNASE.clin %>% filter(!is.na(eGFRGroup))
+
+cat("Get summary statistics for target:\n")
+summary(AERNASE.clin.hdac9$HDAC9)
+
+cat("\nCount number of values > 100 for target:\n")
+sum(AERNASE.clin.hdac9$HDAC9 > 100)
+
+cat("\nSetting values > 100 for target to 100.\n")
+AERNASE.clin.hdac9 <- AERNASE.clin.hdac9 %>% mutate(HDAC9_max100 = ifelse(HDAC9 > 100, 100, HDAC9)) 
+
+cat("Get summary statistics for target after fixing values:\n")
+summary(AERNASE.clin.hdac9$HDAC9_max100)
+```
 
 # Additional figures
 
@@ -267,8 +152,20 @@ ggpubr::ggboxplot(AERNASE.clin.hdac9,
   stat_compare_means(aes(group = Gender), label = "p.format", method = "kruskal.test")
 ggsave(file = paste0(PLOT_loc, "/",Today,".AERNASE.clin.hdac9.",TRAIT_OF_INTEREST,".plaque.Gender.pdf"), plot = last_plot())
 
+compare_means(HDAC9_max100 ~ Gender,  data = AERNASE.clin.hdac9, method = "kruskal.test")
+ggpubr::ggboxplot(AERNASE.clin.hdac9, 
+                  x = c("Gender"),
+                  y = "HDAC9_max100", 
+                  xlab = "gender",
+                  ylab = "HDAC9 (normalized expression)",
+                  color = "Gender",
+                  palette = c("#D5267B", "#1290D9"),
+                  add = "jitter") +
+  stat_compare_means(aes(group = Gender), label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AERNASE.clin.hdac9.",TRAIT_OF_INTEREST,".max100.plaque.Gender.pdf"), plot = last_plot())
 
 ```
+
 
 ```{r AgeGroups}
 library(dplyr)
@@ -325,6 +222,34 @@ ggpubr::ggboxplot(AERNASE.clin.hdac9,
                   add = c("median_iqr", "jitter")) +
   stat_compare_means(aes(group = Gender), label = "p.format", method = "kruskal.test")
 ggsave(file = paste0(PLOT_loc, "/",Today,".AERNASE.clin.hdac9.",TRAIT_OF_INTEREST,".plaque.AgeGroup_perGender.pdf"), plot = last_plot())
+
+# ?ggpubr::ggboxplot()
+compare_means(HDAC9_max100 ~ AgeGroup,  data = AERNASE.clin.hdac9, method = "kruskal.test")
+ggpubr::ggboxplot(AERNASE.clin.hdac9, 
+                  x = c("AgeGroup"),
+                  y = "HDAC9_max100", 
+                  xlab = "Age groups (years)",
+                  ylab = "HDAC9 (normalized expression)",
+                  color = "AgeGroup",
+                  palette = "npg",
+                  # add = "median_iqr")
+                  add = c("median_iqr", "jitter")) +
+  stat_compare_means(aes(group = AgeGroup), label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AERNASE.clin.hdac9.",TRAIT_OF_INTEREST,".max100.plaque.AgeGroup.pdf"), plot = last_plot())
+
+compare_means(HDAC9_max100 ~ AgeGroup, group.by = "Gender", data = AERNASE.clin.hdac9, method = "kruskal.test")
+ggpubr::ggboxplot(AERNASE.clin.hdac9, 
+                  x = c("AgeGroup"),
+                  y = "HDAC9_max100", 
+                  xlab = "Age groups (years) per gender",
+                  ylab = "HDAC9 (normalized expression",
+                  color = "Gender",
+                  palette = c("#D5267B", "#1290D9"),
+                  # add = "median_iqr")
+                  add = c("median_iqr", "jitter")) +
+  stat_compare_means(aes(group = Gender), label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AERNASE.clin.hdac9.",TRAIT_OF_INTEREST,".max100.plaque.AgeGroup_perGender.pdf"), plot = last_plot())
+
 ```
 
 
@@ -452,6 +377,109 @@ ggsave(file = paste0(PLOT_loc, "/",Today,".AERNASE.clin.hdac9.",TRAIT_OF_INTERES
 
 ```
 
+```{r per BloodPressure per Sex HDAC9_max100}
+compare_means(HDAC9_max100 ~ SBPGroup, data = AERNASE.clin.hdac9 %>% filter(!is.na(SBPGroup)), method = "kruskal.test")
+ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(SBPGroup)), 
+                  x = c("SBPGroup"),
+                  y = "HDAC9_max100", 
+                  xlab = "Systolic blood pressure (mmHg)",
+                  ylab = "HDAC9 (normalized expression)",
+                  color = "SBPGroup",
+                  palette = "npg",
+                  add = "jitter") +
+  stat_compare_means(aes(group = SBPGroup), label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AERNASE.clin.hdac9.",TRAIT_OF_INTEREST,".max100.plaque.SBPGroup.pdf"), plot = last_plot())
+
+compare_means(HDAC9_max100 ~ Hypertension.selfreport, data = AERNASE.clin.hdac9 %>% filter(!is.na(Hypertension.selfreport)), method = "kruskal.test")
+ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(Hypertension.selfreport)), 
+                  x = c("Hypertension.selfreport"),
+                  y = "HDAC9_max100", 
+                  xlab = "Self-reported hypertension",
+                  ylab = "HDAC9 (normalized expression)",
+                  color = "Hypertension.selfreport",
+                  palette = "npg",
+                  add = "jitter") +
+  stat_compare_means(aes(group = Hypertension.selfreport), label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AERNASE.clin.hdac9.",TRAIT_OF_INTEREST,".max100.plaque.Hypertension.pdf"), plot = last_plot())
+
+compare_means(HDAC9_max100 ~ Hypertension.drugs, data = AERNASE.clin.hdac9 %>% filter(!is.na(Hypertension.drugs)), method = "kruskal.test")
+ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(Hypertension.drugs)), 
+                  x = c("Hypertension.drugs"),
+                  y = "HDAC9_max100", 
+                  xlab = "Hypertension medication use",
+                  ylab = "HDAC9 (normalized expression)",
+                  color = "Hypertension.drugs",
+                  palette = "npg",
+                  add = "jitter") +
+  stat_compare_means(aes(group = Hypertension.drugs), label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AERNASE.clin.hdac9.",TRAIT_OF_INTEREST,".max100.plaque.HypertensionDrugs.pdf"), plot = last_plot())
+
+
+
+compare_means(HDAC9_max100 ~ SBPGroup, group.by = "Gender", data = AERNASE.clin.hdac9 %>% filter(!is.na(SBPGroup)), method = "kruskal.test")
+ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(SBPGroup)), 
+                  x = c("SBPGroup"),
+                  y = "HDAC9_max100", 
+                  xlab = "Systolic blood pressure (mmHg) per gender",
+                  ylab = "HDAC9 (normalized expression)",
+                  color = "Gender",
+                  palette = c("#D5267B", "#1290D9"),
+                  add = "jitter") +
+  stat_compare_means(aes(group = Gender), label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AERNASE.clin.hdac9.",TRAIT_OF_INTEREST,".max100.plaque.SBPGroup_byGender.pdf"), plot = last_plot())
+
+compare_means(HDAC9_max100 ~ Hypertension.selfreport, group.by = "Gender", data = AERNASE.clin.hdac9 %>% filter(!is.na(Hypertension.selfreport)), method = "kruskal.test")
+ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(Hypertension.selfreport)), 
+                  x = c("Hypertension.selfreport"),
+                  y = "HDAC9_max100", 
+                  xlab = "Self-reported hypertension per gender",
+                  ylab = "HDAC9 (normalized expression)",
+                  color = "Gender",
+                  palette = c("#D5267B", "#1290D9"),
+                  add = "jitter") +
+  stat_compare_means(aes(group = Gender), label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AERNASE.clin.hdac9.",TRAIT_OF_INTEREST,".max100.plaque.Hypertension_byGender.pdf"), plot = last_plot())
+
+compare_means(HDAC9_max100 ~ Hypertension.drugs, group.by = "Gender", data = AERNASE.clin.hdac9 %>% filter(!is.na(Hypertension.drugs)), method = "kruskal.test")
+ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(Hypertension.drugs)), 
+                  x = c("Hypertension.drugs"),
+                  y = "HDAC9_max100", 
+                  xlab = "Hypertension medication use per gender",
+                  ylab = "HDAC9 (normalized expression)",
+                  color = "Gender",
+                  palette = c("#D5267B", "#1290D9"),
+                  add = "jitter") +
+  stat_compare_means(aes(group = Gender), label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AERNASE.clin.hdac9.",TRAIT_OF_INTEREST,".max100.plaque.Hypertension.drugs_byGender.pdf"), plot = last_plot())
+
+
+
+compare_means(HDAC9_max100 ~ SBPGroup, group.by = "Hypertension.drugs", data = AERNASE.clin.hdac9 %>% filter(!is.na(SBPGroup) & !is.na(Hypertension.drugs)), method = "kruskal.test")
+ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(SBPGroup) & !is.na(Hypertension.drugs)), 
+                  x = c("SBPGroup"),
+                  y = "HDAC9_max100", 
+                  xlab = "Systolic blood pressure (mmHg) by medication use",
+                  ylab = "HDAC9 (normalized expression)",
+                  color = "Hypertension.drugs",
+                  palette = c("#49A01D", "#1290D9"),
+                  add = "jitter") +
+  stat_compare_means(aes(group = Hypertension.drugs), label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AERNASE.clin.hdac9.",TRAIT_OF_INTEREST,".max100.plaque.SBPGroup_byHypertensionDrugs.pdf"), plot = last_plot())
+
+compare_means(HDAC9_max100 ~ Hypertension.selfreport, group.by = "Hypertension.drugs", data = AERNASE.clin.hdac9 %>% filter(!is.na(Hypertension.selfreport) & !is.na(Hypertension.drugs)), method = "kruskal.test")
+ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(Hypertension.selfreport) & !is.na(Hypertension.drugs)), 
+                  x = c("Hypertension.selfreport"),
+                  y = "HDAC9_max100", 
+                  xlab = "Self-reported hypertension per medication use",
+                  ylab = "HDAC9 (normalized expression)",
+                  color = "Hypertension.drugs",
+                  palette = c("#49A01D", "#1290D9"),
+                  add = "jitter") +
+  stat_compare_means(aes(group = Hypertension.drugs), label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AERNASE.clin.hdac9.",TRAIT_OF_INTEREST,".max100.plaque.Hypertension.selfreport_byHypertensionDrugs.pdf"), plot = last_plot())
+
+```
+
 
 ## Hypercholesterolemia & LDL levels
 We want to create figures of target(s) levels stratified by hypercholesterolemia/LDL-levels, and use of lipid-lowering drugs. 
@@ -483,10 +511,10 @@ AERNASE.clin.hdac9$risk614 <- to_factor(AERNASE.clin.hdac9$risk614)
 # Fix plaquephenotypes
 attach(AERNASE.clin.hdac9)
 AERNASE.clin.hdac9[,"Hypercholesterolemia"] <- NA
-AERNASE.clin.hdac9$Hypercholesterolemia[risk614 == "missing value"] <- NA
-AERNASE.clin.hdac9$Hypercholesterolemia[risk614 == -999] <- NA
-AERNASE.clin.hdac9$Hypercholesterolemia[risk614 == 0] <- "no"
-AERNASE.clin.hdac9$Hypercholesterolemia[risk614 == 1] <- "yes"
+# AERNASE.clin.hdac9$Hypercholesterolemia[risk614 == "missing value"] <- NA
+# AERNASE.clin.hdac9$Hypercholesterolemia[risk614 == -999] <- NA
+AERNASE.clin.hdac9$Hypercholesterolemia[risk614 == "no"] <- "no"
+AERNASE.clin.hdac9$Hypercholesterolemia[risk614 == "yes"] <- "yes"
 detach(AERNASE.clin.hdac9)
 
 table(AERNASE.clin.hdac9$risk614, AERNASE.clin.hdac9$Hypercholesterolemia)
@@ -613,6 +641,112 @@ ggsave(file = paste0(PLOT_loc, "/",Today,".AERNASE.clin.hdac9.",TRAIT_OF_INTERES
 ```
 
 
+```{r per Hypercholesterolemia per Sex HDAC9_max100}
+
+compare_means(HDAC9_max100 ~ LDLGroup, data = AERNASE.clin.hdac9 %>% filter(!is.na(LDLGroup)), method = "kruskal.test")
+ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(LDLGroup)), 
+                  x = c("LDLGroup"),
+                  y = "HDAC9_max100", 
+                  xlab = "LDL (mg/dL) per gender",
+                  ylab = "HDAC9 (normalized expression))",
+                  color = "LDLGroup",
+                  palette = "npg",
+                  add = "jitter") +
+  stat_compare_means(label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AERNASE.clin.hdac9.",TRAIT_OF_INTEREST,".max100.plaque.LDLGroups.pdf"), plot = last_plot())
+
+compare_means(HDAC9_max100 ~ LDLGroup, group.by = "Gender", data = AERNASE.clin.hdac9 %>% filter(!is.na(LDLGroup)), method = "kruskal.test")
+ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(LDLGroup)), 
+                  x = c("LDLGroup"),
+                  y = "HDAC9_max100", 
+                  xlab = "LDL (mg/dL) per gender",
+                  ylab = "HDAC9 (normalized expression))",
+                  color = "Gender",
+                  palette = c("#D5267B", "#1290D9"),
+                  add = "jitter") +
+  stat_compare_means(aes(group = Gender), label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AERNASE.clin.hdac9.",TRAIT_OF_INTEREST,".max100.plaque.LDLGroups_byGender.pdf"), plot = last_plot())
+
+
+
+compare_means(HDAC9_max100 ~ Hypercholesterolemia, data = AERNASE.clin.hdac9 %>% filter(!is.na(Hypercholesterolemia)), method = "kruskal.test")
+ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(Hypercholesterolemia)), 
+                  x = c("Hypercholesterolemia"),
+                  y = "HDAC9_max100", 
+                  xlab = "Diagnosed hypercholesterolemia",
+                  ylab = "HDAC9 (normalized expression))",
+                  color = "Hypercholesterolemia",
+                  palette = "npg",
+                  add = "jitter") +
+  stat_compare_means(label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AERNASE.clin.hdac9.",TRAIT_OF_INTEREST,".max100.plaque.Hypercholesterolemia.pdf"), plot = last_plot())
+
+compare_means(HDAC9_max100 ~ Hypercholesterolemia, group.by = "Gender", data = AERNASE.clin.hdac9 %>% filter(!is.na(Hypercholesterolemia)), method = "kruskal.test")
+ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(Hypercholesterolemia)), 
+                  x = c("Hypercholesterolemia"),
+                  y = "HDAC9_max100", 
+                  xlab = "Diagnosed hypercholesterolemia per gender",
+                  ylab = "HDAC9 (normalized expression))",
+                  color = "Gender",
+                  palette = c("#D5267B", "#1290D9"),
+                  add = "jitter") +
+  stat_compare_means(aes(group = Gender), label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AERNASE.clin.hdac9.",TRAIT_OF_INTEREST,".max100.plaque.Hypercholesterolemia_byGender.pdf"), plot = last_plot())
+
+
+compare_means(HDAC9_max100 ~ Med.Statin.LLD, data = AERNASE.clin.hdac9 %>% filter(!is.na(Med.Statin.LLD)), method = "kruskal.test")
+ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(Med.Statin.LLD)), 
+                  x = c("Med.Statin.LLD"),
+                  y = "HDAC9_max100", 
+                  xlab = "Lipid-lowering drug use",
+                  ylab = "HDAC9 (normalized expression))",
+                  color = "Med.Statin.LLD",
+                  palette = "npg",
+                  add = "jitter") +
+  stat_compare_means(label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AERNASE.clin.hdac9.",TRAIT_OF_INTEREST,".max100.plaque.Med.Statin.LLD.pdf"), plot = last_plot())
+
+compare_means(HDAC9_max100 ~ Med.Statin.LLD, group.by = "Gender", data = AERNASE.clin.hdac9 %>% filter(!is.na(Med.Statin.LLD)), method = "kruskal.test")
+ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(Med.Statin.LLD)), 
+                  x = c("Med.Statin.LLD"),
+                  y = "HDAC9_max100", 
+                  xlab = "Lipid-lowering drug use per gender",
+                  ylab = "HDAC9 (normalized expression))",
+                  color = "Gender",
+                  palette = c("#D5267B", "#1290D9"),
+                  add = "jitter") +
+  stat_compare_means(aes(group = Gender), label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AERNASE.clin.hdac9.",TRAIT_OF_INTEREST,".max100.plaque.Med.Statin.LLD_byGender.pdf"), plot = last_plot())
+
+
+
+
+compare_means(HDAC9_max100 ~ LDLGroup, group.by = "Med.Statin.LLD", data = AERNASE.clin.hdac9 %>% filter(!is.na(LDLGroup) & !is.na(Med.Statin.LLD)), method = "kruskal.test")
+ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(LDLGroup) & !is.na(Med.Statin.LLD)), 
+                  x = c("LDLGroup"),
+                  y = "HDAC9_max100", 
+                  xlab = "LDL (mg/dL) per LLD use",
+                  ylab = "HDAC9 (normalized expression))",
+                  color = "Med.Statin.LLD",
+                  palette = c("#49A01D", "#1290D9"),
+                  add = "jitter") +
+  stat_compare_means(aes(group = Med.Statin.LLD), label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AERNASE.clin.hdac9.",TRAIT_OF_INTEREST,".max100.plaque.LDLGroups_byMed.Statin.LLD.pdf"), plot = last_plot())
+
+compare_means(HDAC9_max100 ~ Hypercholesterolemia, group.by = "Med.Statin.LLD", data = AERNASE.clin.hdac9 %>% filter(!is.na(Hypercholesterolemia) & !is.na(Med.Statin.LLD)), method = "kruskal.test")
+ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(Hypercholesterolemia) & !is.na(Med.Statin.LLD)), 
+                  x = c("Hypercholesterolemia"),
+                  y = "HDAC9_max100", 
+                  xlab = "Diagnosed hypercholesterolemia per LLD use",
+                  ylab = "HDAC9 (normalized expression))",
+                  color = "Med.Statin.LLD",
+                  palette = c("#49A01D", "#1290D9"),
+                  add = "jitter") +
+  stat_compare_means(aes(group = Med.Statin.LLD), label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AERNASE.clin.hdac9.",TRAIT_OF_INTEREST,".max100.plaque.LDLGroups_byMed.Statin.LLD.pdf"), plot = last_plot())
+
+
+```
 
 ## Kidney function (eGFR)
 We want to create figures of target(s) levels stratified by kidney function. 
@@ -710,7 +844,77 @@ ggsave(file = paste0(PLOT_loc, "/",Today,".AERNASE.clin.hdac9.",TRAIT_OF_INTERES
 
 ```
 
+```{r per EGFR per Sex HDAC9_max100}
 
+# Global test
+
+compare_means(HDAC9_max100 ~ eGFRGroup, data = AERNASE.clin.hdac9 %>% filter(!is.na(eGFRGroup)), method = "kruskal.test")
+ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(eGFRGroup)), 
+                  x = c("eGFRGroup"),
+                  y = "HDAC9_max100", 
+                  xlab = "eGFR (mL/min per 1.73 m2)",
+                  ylab = "HDAC9 (normalized expression)",
+                  color = "eGFRGroup",
+                  palette = "npg",
+                  add = "jitter") +
+  stat_compare_means(method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AERNASE.clin.hdac9.",TRAIT_OF_INTEREST,".max100.plaque.EGFR.pdf"), plot = last_plot())
+
+compare_means(HDAC9_max100 ~ eGFRGroup, group.by = "Gender",  data = AERNASE.clin.hdac9 %>% filter(!is.na(eGFRGroup)), method = "kruskal.test")
+ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(eGFRGroup)), 
+                  x = c("eGFRGroup"),
+                  y = "HDAC9_max100", 
+                  xlab = "eGFR (mL/min per 1.73 m2) per gender",
+                  ylab = "HDAC9 (normalized expression)",
+                  color = "Gender",
+                  palette = c("#D5267B", "#1290D9"),
+                  add = "jitter") +
+  stat_compare_means(aes(group = Gender), label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AERNASE.clin.hdac9.",TRAIT_OF_INTEREST,".max100.plaque.EGFR_byGender.pdf"), plot = last_plot())
+
+compare_means(HDAC9_max100 ~ KDOQI, data = AERNASE.clin.hdac9 %>% filter(!is.na(KDOQI)), method = "kruskal.test")
+p1 <- ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(KDOQI)), 
+                  x = c("KDOQI"),
+                  y = "HDAC9_max100", 
+                  xlab = "Kidney function (KDOQI)",
+                  ylab = "HDAC9 (normalized expression)",
+                  color = "KDOQI",
+                  palette = "npg",
+                  add = "jitter") +
+  stat_compare_means(aes(group = KDOQI), label = "p.format", method = "kruskal.test")
+ggpar(p1 + rotate_x_text(45), legend = "right") 
+rm(p1)
+ggsave(file = paste0(PLOT_loc, "/",Today,".AERNASE.clin.hdac9.",TRAIT_OF_INTEREST,".max100.plaque.KDOQI.pdf"), plot = last_plot())
+
+compare_means(HDAC9_max100 ~ KDOQI, group.by = "Gender",   data = AERNASE.clin.hdac9 %>% filter(!is.na(KDOQI)), method = "kruskal.test")
+p1 <- ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(KDOQI)), 
+                  x = c("KDOQI"),
+                  y = "HDAC9_max100", 
+                  xlab = "Kidney function (KDOQI) per gender",
+                  ylab = "HDAC9 (normalized expression)",
+                  color = "Gender",
+                  palette = c("#D5267B", "#1290D9"),
+                  add = "jitter") +
+  stat_compare_means(aes(group = Gender), label = "p.format", method = "kruskal.test")
+ggpar(p1 + rotate_x_text(45), legend = "right") 
+rm(p1)
+ggsave(file = paste0(PLOT_loc, "/",Today,".AERNASE.clin.hdac9.",TRAIT_OF_INTEREST,".max100.plaque.KDOQI_byGender.pdf"), plot = last_plot())
+
+compare_means(HDAC9_max100 ~ eGFRGroup,  data = AERNASE.clin.hdac9 %>% filter(!is.na(eGFRGroup) & !is.na(KDOQI)), method = "kruskal.test")
+p1 <- ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(eGFRGroup) & !is.na(KDOQI)), 
+                  x = c("eGFRGroup"),
+                  y = "HDAC9_max100", 
+                  xlab = "eGFR (mL/min per 1.73 m2) by KDOQI group",
+                  ylab = "HDAC9 (normalized expression)",
+                  color = "KDOQI",
+                  palette = "npg",
+                  add = "jitter") +
+  stat_compare_means(method = "kruskal.test")
+ggpar(p1, legend = "right")
+rm(p1)
+ggsave(file = paste0(PLOT_loc, "/",Today,".AERNASE.clin.hdac9.",TRAIT_OF_INTEREST,".max100.plaque.EGFR_KDOQI.pdf"), plot = last_plot())
+
+```
 
 ## BMI
 We want to create figures of target(s) levels stratified by BMI. 
@@ -786,6 +990,53 @@ ggsave(file = paste0(PLOT_loc, "/",Today,".AERNASE.clin.hdac9.",TRAIT_OF_INTERES
 ```
 
 
+```{r per BMI per Sex HDAC9_max100}
+
+# Global test
+compare_means(HDAC9_max100 ~ BMIGroup,  data = AERNASE.clin.hdac9 %>% filter(!is.na(BMIGroup)), method = "kruskal.test")
+ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(BMIGroup)), 
+                  x = c("BMIGroup"),
+                  y = "HDAC9_max100", 
+                  xlab = "BMI groups (kg/m2)",
+                  ylab = "HDAC9 (normalized expression)",
+                  # color = "Gender",
+                  # palette = c("#D5267B", "#1290D9"),
+                  color = "BMIGroup",
+                  palette = "npg",
+                  add = "jitter") +
+  stat_compare_means(label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AERNASE.clin.hdac9.",TRAIT_OF_INTEREST,".max100.plaque.BMI.pdf"), plot = last_plot())
+
+compare_means(HDAC9_max100 ~ BMIGroup, group.by = "Gender", data = AERNASE.clin.hdac9 %>% filter(!is.na(BMIGroup)), method = "kruskal.test")
+ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(BMIGroup)), 
+                  x = c("BMIGroup"),
+                  y = "HDAC9_max100", 
+                  xlab = "BMI groups (kg/m2) per gender",
+                  ylab = "HDAC9 (normalized expression)",
+                  color = "Gender",
+                  palette = c("#D5267B", "#1290D9"),
+                  add = "jitter") +
+  stat_compare_means(aes(group = Gender), label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AERNASE.clin.hdac9.",TRAIT_OF_INTEREST,".max100.plaque.BMI_byGender.pdf"), plot = last_plot())
+
+compare_means(HDAC9_max100 ~ BMIGroup,  data = AERNASE.clin.hdac9 %>% filter(!is.na(BMIGroup) & !is.na(BMI_WHO)), method = "kruskal.test")
+p1 <- ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(BMIGroup) & !is.na(BMI_WHO)), 
+                  x = c("BMIGroup"),
+                  y = "HDAC9_max100", 
+                  xlab = "BMI groups (kg/m2) per WHO categories",
+                  ylab = "HDAC9 (normalized expression)",
+                  color = "BMI_WHO",
+                  palette = "npg",
+                  add = "jitter") +
+  stat_compare_means(method = "kruskal.test")
+ggpar(p1, legend = "right")
+rm(p1)
+ggsave(file = paste0(PLOT_loc, "/",Today,".AERNASE.clin.hdac9.",TRAIT_OF_INTEREST,".max100.plaque.BMI_byWHO.pdf"), plot = last_plot())
+
+```
+
+
+
 ## Diabetes
 We want to create figures of target(s) levels stratified by type 2 diabetes. 
 
@@ -827,6 +1078,38 @@ ggsave(file = paste0(PLOT_loc, "/",Today,".AERNASE.clin.hdac9.",TRAIT_OF_INTERES
 ```
 
 
+```{r per Diabetes per Sex HDAC9_max100}
+
+# Global test
+compare_means(HDAC9_max100 ~ DiabetesStatus,  data = AERNASE.clin.hdac9 %>% filter(!is.na(DiabetesStatus)), method = "kruskal.test")
+ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(DiabetesStatus)), 
+                  x = c("DiabetesStatus"),
+                  y = "HDAC9_max100", 
+                  xlab = "Diabetes status",
+                  ylab = "HDAC9 (normalized expression)",
+                  # color = "Gender",
+                  # palette = c("#D5267B", "#1290D9"),
+                  color = "DiabetesStatus",
+                  palette = "npg",
+                  add = c("median_iqr", "jitter")) +
+  stat_compare_means(label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AERNASE.clin.hdac9.",TRAIT_OF_INTEREST,".max100.plaque.Diabetes.pdf"), plot = last_plot())
+
+compare_means(HDAC9_max100 ~ DiabetesStatus, group.by = "Gender", data = AERNASE.clin.hdac9 %>% filter(!is.na(DiabetesStatus)), method = "kruskal.test")
+ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(DiabetesStatus)), 
+                  x = c("DiabetesStatus"),
+                  y = "HDAC9_max100", 
+                  xlab = "Diabetes status per gender",
+                  ylab = "HDAC9 (normalized expression)",
+                  color = "Gender",
+                  palette = c("#D5267B", "#1290D9"),
+                  add = c("median_iqr", "jitter")) +
+  stat_compare_means(aes(group = Gender), label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AERNASE.clin.hdac9.",TRAIT_OF_INTEREST,".max100.plaque.Diabetes_byGender.pdf"), plot = last_plot())
+
+
+```
+
 
 ## Smoking
 We want to create figures of target(s) levels stratified by smoking. 
@@ -867,7 +1150,36 @@ ggsave(file = paste0(PLOT_loc, "/",Today,".AERNASE.clin.hdac9.",TRAIT_OF_INTERES
 
 ```
 
+```{r per Smoking per Sex HDAC9_max100}
 
+# Global test
+compare_means(HDAC9_max100 ~ SmokerStatus,  data = AERNASE.clin.hdac9 %>% filter(!is.na(SmokerStatus)), method = "kruskal.test")
+ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(SmokerStatus)), 
+                  x = c("SmokerStatus"),
+                  y = "HDAC9_max100", 
+                  xlab = "Smoker status",
+                  ylab = "HDAC9 (normalized expression)",
+                  # color = "Gender",
+                  # palette = c("#D5267B", "#1290D9"),
+                  color = "SmokerStatus",
+                  palette = "npg",
+                  add = c("median_iqr", "jitter")) +
+  stat_compare_means(label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AERNASE.clin.hdac9.",TRAIT_OF_INTEREST,".max100.plaque.Smoking.pdf"), plot = last_plot())
+
+compare_means(HDAC9_max100 ~ SmokerStatus, group.by ="Gender", data = AERNASE.clin.hdac9 %>% filter(!is.na(SmokerStatus)), method = "kruskal.test")
+ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(SmokerStatus)), 
+                  x = c("SmokerStatus"),
+                  y = "HDAC9_max100", 
+                  xlab = "Smoker status per gender",
+                  ylab = "HDAC9 (normalized expression)",
+                  color = "Gender",
+                  palette = c("#D5267B", "#1290D9"),
+                  add = c("median_iqr", "jitter")) +
+  stat_compare_means(aes(group = Gender), label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AERNASE.clin.hdac9.",TRAIT_OF_INTEREST,".max100.plaque.Smoking_byGender.pdf"), plot = last_plot())
+
+```
 
 ## Stenosis
 We want to create figures of target(s) levels stratified by stenosis grade. 
@@ -923,6 +1235,38 @@ ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(StenoticGroup)),
 ggsave(file = paste0(PLOT_loc, "/",Today,".AERNASE.clin.hdac9.",TRAIT_OF_INTEREST,".plaque.Stenosis_byGender.pdf"), plot = last_plot())
 
 ```
+
+```{r per Stenosis per Sex HDAC9_max100}
+
+# Global test
+compare_means(HDAC9_max100 ~ StenoticGroup,  data = AERNASE.clin.hdac9 %>% filter(!is.na(StenoticGroup)), method = "kruskal.test")
+ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(StenoticGroup)), 
+                  x = c("StenoticGroup"),
+                  y = "HDAC9_max100", 
+                  xlab = "Stenotic grade",
+                  ylab = "HDAC9 (normalized expression)",
+                  # color = "Gender",
+                  # palette = c("#D5267B", "#1290D9"),
+                  color = "StenoticGroup",
+                  palette = "npg",
+                  add = "jitter") +
+  stat_compare_means(label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AERNASE.clin.hdac9.",TRAIT_OF_INTEREST,".max100.plaque.Stenosis.pdf"), plot = last_plot())
+
+compare_means(HDAC9_max100 ~ StenoticGroup, group.by = "Gender", data = AERNASE.clin.hdac9 %>% filter(!is.na(StenoticGroup)), method = "kruskal.test")
+ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(StenoticGroup)), 
+                  x = c("StenoticGroup"),
+                  y = "HDAC9_max100", 
+                  xlab = "Stenotic grade per gender",
+                  ylab = "HDAC9 (normalized expression)",
+                  color = "Gender",
+                  palette = c("#D5267B", "#1290D9"),
+                  add = "jitter") +
+  stat_compare_means(aes(group = Gender), label = "p.format", method = "kruskal.test")
+ggsave(file = paste0(PLOT_loc, "/",Today,".AERNASE.clin.hdac9.",TRAIT_OF_INTEREST,".max100.plaque.Stenosis_byGender.pdf"), plot = last_plot())
+
+```
+
 
 
 ## Symptoms
@@ -1043,8 +1387,11 @@ We would also like to visualize the multivariable analyses results.
 ```{r load model data}
 library(ggplot2)
 library(openxlsx)
-model1_target <- read.xlsx(paste0(OUT_loc, "/", Today, ".AERNASE.clin.hdac9.Bin.Uni.",TRAIT_OF_INTEREST,".RANK.Symptoms.MODEL1.xlsx"))
-model2_target <- read.xlsx(paste0(OUT_loc, "/", Today, ".AERNASE.clin.hdac9.Bin.Multi.",TRAIT_OF_INTEREST,".RANK.Symptoms.MODEL2.xlsx"))
+# model1_target <- read.xlsx(paste0(OUT_loc, "/", Today, ".AERNASE.clin.hdac9.Bin.Uni.",TRAIT_OF_INTEREST,".RANK.Symptoms.MODEL1.xlsx"))
+# model2_target <- read.xlsx(paste0(OUT_loc, "/", Today, ".AERNASE.clin.hdac9.Bin.Multi.",TRAIT_OF_INTEREST,".RANK.Symptoms.MODEL2.xlsx"))
+
+model1_target <- read.xlsx(paste0(OUT_loc, "/20230531.AERNASE.clin.hdac9.Bin.Uni.",TRAIT_OF_INTEREST,".RANK.Symptoms.MODEL1.xlsx"))
+model2_target <- read.xlsx(paste0(OUT_loc, "/20230531.AERNASE.clin.hdac9.Bin.Multi.",TRAIT_OF_INTEREST,".RANK.Symptoms.MODEL2.xlsx"))
 
 model1_target$model <- "univariate"
 model2_target$model <- "multivariate"
@@ -1340,12 +1687,16 @@ temp <- subset(corr_biomarkers.rank.df, Cytokine_X == "HDAC9 (RNA)" )
 temp$p_log10 <- -log10(temp$p)
 p_threshold <- -log10(0.05/nrow(temp))
 p_threshold
-p1 <- ggbarplot(temp, x = "CytokineY", y = "SpearmanRho",
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+
+p1 <- ggpubr::ggbarplot(temp, x = "CytokineY", y = "SpearmanRho",
           fill = "CytokineY",               # change fill color by cyl
           # color = "white",            # Set bar border colors to white
           palette = uithof_color,            # jco journal color palett. see ?ggpar
           xlab = "Cytokine",
-          ylab = expression("Spearman's"~italic(rho)),
+          ylab = "Spearman's rho", # expression("Spearman's"~italic(rho)),
           sort.val = "desc",          # Sort the value in dscending order
           sort.by.groups = FALSE,     # Don't sort inside each group
           x.text.angle = 45, # Rotate vertically x axis texts
@@ -1375,7 +1726,7 @@ p1 <- ggdotchart(temp, x = "CytokineY", y = "p_log10",
            color = "CytokineY", #fill = "CytokineY",                              # Color by groups
            palette = uithof_color, # Custom color palette
            xlab = "Cytokine",
-           ylab = expression(log[10]~"("~italic(p)~")-value"),
+           ylab = "log10(P)", # expression(log[10]~"("~italic(p)~")-value"),
            # ylim = c(0, 9),
            sorting = "descending",                       # Sort value in descending order
            add = "segments",                             # Add segments from y = 0 to dots
@@ -1612,6 +1963,29 @@ ggpar(p1, legend = "bottom", legend.title = "Plaque vulnerability index")
 ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.PlaqueVulnerabilityIndex.pdf"), plot = last_plot())
 ```
 
+```{r}
+compare_means(HDAC9_max100 ~ Plaque_Vulnerability_Index,  data = AERNASE.clin.hdac9, method = "kruskal.test")
+p1 <- ggpubr::ggboxplot(AERNASE.clin.hdac9, 
+                  x = "Plaque_Vulnerability_Index",
+                  y = "HDAC9_max100", 
+                  xlab = "Plaque vulnerability index",
+                  ylab = "HDAC9 (normalized expression)\n",
+                  color = "Plaque_Vulnerability_Index",
+                  palette = "npg",
+                  add = "jitter", 
+                  add.params = list(size = 2, jitter = 0.2)) +
+  stat_compare_means(label = "p.format",  method = "kruskal.test") +
+  font("xlab", size = 17) +
+  font("ylab", size = 17) +
+  font("xy.text", size = 16) +
+  font("legend.title", face = "bold") 
+  
+ggpar(p1, legend = "bottom", legend.title = "Plaque vulnerability index")
+
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".max100.plaque.PlaqueVulnerabilityIndex.pdf"), plot = last_plot())
+```
+
+
 ```{r }
 # Global test
 compare_means(HDAC9 ~ Plaque_Vulnerability_Index,  data = AERNASE.clin.hdac9, method = "kruskal.test")
@@ -1636,8 +2010,33 @@ ggpar(p1, legend = "bottom", legend.title = "Plaque vulnerability index", ylim =
 
 ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.PlaqueVulnerabilityIndex.BarPlot.median_iqr.pdf"), plot = last_plot())
 
-compare_means(HDAC9 ~ Plaque_Vulnerability_Index,  data = AERNASE.clin.hdac9, method = "kruskal.test")
 ```
+
+```{r}
+compare_means(HDAC9_max100 ~ Plaque_Vulnerability_Index,  data = AERNASE.clin.hdac9, method = "kruskal.test")
+
+p1 <- ggpubr::ggbarplot(AERNASE.clin.hdac9, 
+                  x = "Plaque_Vulnerability_Index",
+                  y = "HDAC9_max100", 
+                  xlab = "Plaque vulnerability index",
+                  ylab = "HDAC9 (normalized expression)\n",
+                  col = "Plaque_Vulnerability_Index",
+                  fill = "Plaque_Vulnerability_Index",
+                  palette = "npg",
+                  add = "median_iqr", error.plot = "upper_errorbar") +
+  stat_compare_means(label = "p.format",  method = "kruskal.test",
+                     label.x = 1, label.y = 50) +
+  font("xlab", size = 17) +
+  font("ylab", size = 17) +
+  font("xy.text", size = 16) +
+  font("legend.title", face = "bold") 
+  
+ggpar(p1, legend = "bottom", legend.title = "Plaque vulnerability index", ylim = c(0, 55))
+
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".max100.plaque.PlaqueVulnerabilityIndex.BarPlot.median_iqr.pdf"), plot = last_plot())
+
+```
+
 
 ```{r}
 p1 <- ggpubr::ggbarplot(AERNASE.clin.hdac9, 
@@ -1660,6 +2059,28 @@ ggpar(p1, legend = "bottom", legend.title = "Plaque vulnerability index", ylim =
 
 ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.PlaqueVulnerabilityIndex.BarPlot.means_se.pdf"), plot = last_plot())
 
+```
+
+```{r}
+p1 <- ggpubr::ggbarplot(AERNASE.clin.hdac9, 
+                  x = "Plaque_Vulnerability_Index",
+                  y = "HDAC9_max100", 
+                  xlab = "Plaque vulnerability index",
+                  ylab = "HDAC9 (normalized expression)\n",
+                  col = "Plaque_Vulnerability_Index",
+                  fill = "Plaque_Vulnerability_Index",
+                  palette = "npg",
+                  add = "mean_se", error.plot = "upper_errorbar") +
+  stat_compare_means(label = "p.format",  method = "kruskal.test",
+                     label.x = 1, label.y = 50) +
+  font("xlab", size = 17) +
+  font("ylab", size = 17) +
+  font("xy.text", size = 16) +
+  font("legend.title", face = "bold") 
+  
+ggpar(p1, legend = "bottom", legend.title = "Plaque vulnerability index", ylim = c(0, 55))
+
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".max100.plaque.PlaqueVulnerabilityIndex.BarPlot.means_se.pdf"), plot = last_plot())
 ```
 
 
@@ -1711,6 +2132,30 @@ ggpar(p1, legend = "bottom", legend.title = "Plaque vulnerability index")
 ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.FacetByPlaqueVulnerabilityIndex.pdf"), plot = last_plot())
 ```
 
+```{r}
+compare_means(HDAC9_max100 ~ Plaque_Vulnerability_Index,  data = AERNASE.clin.hdac9, method = "kruskal.test")
+p1 <- ggpubr::ggboxplot(AERNASE.clin.hdac9, 
+                  x = "Plaque_Vulnerability_Index",
+                  y = "HDAC9_max100", 
+                  facet.by = "Plaque_Vulnerability_Index",
+                  xlab = "Plaque vulnerability index",
+                  ylab = "HDAC9 (normalized expression)\n",
+                  color = "Plaque_Vulnerability_Index",
+                  palette = "npg",
+                  add = "jitter", 
+                  add.params = list(size = 2, jitter = 0.2)) +
+  stat_compare_means(label = "p.format",  method = "kruskal.test") +
+  font("xlab", size = 17) +
+  font("ylab", size = 17) +
+  font("xy.text", size = 16) +
+  font("legend.title", face = "bold") 
+  
+ggpar(p1, legend = "bottom", legend.title = "Plaque vulnerability index")
+
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".max100.plaque.FacetByPlaqueVulnerabilityIndex.pdf"), plot = last_plot())
+```
+
+
 
 ```{r}
 compare_means(HDAC9 ~ Plaque_Vulnerability_Index, group.by = "Gender", data = AERNASE.clin.hdac9, method = "kruskal.test")
@@ -1727,6 +2172,22 @@ ggpar(p2, legend = "bottom", legend.title = "Plaque vulnerability index")
 ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.PlaqueVulnerabilityIndex.byGender.pdf"), plot = last_plot())
 
 ```
+
+```{r}
+compare_means(HDAC9_max100 ~ Plaque_Vulnerability_Index, group.by = "Gender", data = AERNASE.clin.hdac9, method = "kruskal.test")
+p2 <- ggpubr::ggboxplot(AERNASE.clin.hdac9, 
+                  x = "Plaque_Vulnerability_Index",
+                  y = "HDAC9_max100", 
+                  xlab = "Plaque vulnerability index by gender",
+                  ylab = "HDAC9 (normalized expression)\n",
+                  color = "Gender",
+                  palette = c("#D5267B", "#1290D9"),
+                  add = "jitter") +
+  stat_compare_means(aes(group = Gender), label = "p.format",  method = "kruskal.test")
+ggpar(p2, legend = "bottom", legend.title = "Plaque vulnerability index")
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".max100.plaque.PlaqueVulnerabilityIndex.byGender.pdf"), plot = last_plot())
+```
+
 
 ```{r}
 
@@ -1746,6 +2207,24 @@ ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.Pl
 ```
 
 ```{r}
+compare_means(HDAC9_max100 ~ Plaque_Vulnerability_Index, data = AERNASE.clin.hdac9, method = "kruskal.test")
+p5 <- ggpubr::ggboxplot(AERNASE.clin.hdac9, 
+                  x = "Plaque_Vulnerability_Index",
+                  y = "HDAC9_max100", 
+                  xlab = "Plaque vulnerability index",
+                  ylab = "HDAC9 (normalized expression)\n",
+                  color = "Plaque_Vulnerability_Index",
+                  palette = "npg",
+                  facet.by = "ORyearGroup",
+                  add = "jitter") +
+  stat_compare_means(label = "p.format",  method = "kruskal.test")
+ggpar(p5, legend = "bottom", legend.title = "Plaque vulnerability index")
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".max100.plaque.PlaqueVulnerabilityIndex_Facet_byYear.pdf"), plot = last_plot())
+```
+
+
+
+```{r}
 compare_means(HDAC9 ~ Plaque_Vulnerability_Index, group.by = "Gender", data = AERNASE.clin.hdac9, method = "kruskal.test")
 p6 <- ggpubr::ggboxplot(AERNASE.clin.hdac9, 
                   x = "Plaque_Vulnerability_Index",
@@ -1762,6 +2241,21 @@ ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.Pl
 
 ```
 
+```{r}
+compare_means(HDAC9_max100 ~ Plaque_Vulnerability_Index, group.by = "Gender", data = AERNASE.clin.hdac9, method = "kruskal.test")
+p6 <- ggpubr::ggboxplot(AERNASE.clin.hdac9, 
+                  x = "Plaque_Vulnerability_Index",
+                  y = "HDAC9_max100", 
+                  xlab = "Plaque vulnerability index",
+                  ylab = "HDAC9 (normalized expression)\n",
+                  color = "Gender",
+                  palette = c("#D5267B", "#1290D9"),
+                  facet.by = "ORyearGroup",
+                  add = "jitter") +
+  stat_compare_means(aes(group = Gender), label = "p.format",  method = "kruskal.test")
+ggpar(p6, legend = "bottom", legend.title = "Plaque vulnerability index")
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".max100.plaque.PlaqueVulnerabilityIndex_Facet_byYear.byGender.pdf"), plot = last_plot())
+```
 
 
 ### Model 1
@@ -1915,7 +2409,8 @@ ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.Hi
 ```
 
 ```{r}
-AERNASE.clin.hdac9.forSHARE <- subset(AERNASE.clin.hdac9, select = c("STUDY_NUMBER", "Age", "Gender", "HDAC9", "Plaque_Vulnerability_Index"))
+AERNASE.clin.hdac9.forSHARE <- subset(AERNASE.clin.hdac9, select = c("STUDY_NUMBER", "Age", "Gender", 
+                                                                     "HDAC9", "HDAC9_max100", "Plaque_Vulnerability_Index"))
 ```
 
 
@@ -1996,6 +2491,22 @@ ggpar(p6, legend = "bottom", legend.title = "Fat <10% vs >10% by year of surgery
 ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.Fat.bin_10_Facet_byYear.byGender.pdf"), plot = last_plot())
 ```
 
+```{r}
+compare_means(HDAC9_max100 ~ Fat.bin_10,  data = AERNASE.clin.hdac9 %>% filter(!is.na(Fat.bin_10)), method = "kruskal.test")
+p1 <- ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(Fat.bin_10)), 
+                  x = "Fat.bin_10",
+                  y = "HDAC9_max100", 
+                  xlab = "Fat <10% vs >10%",
+                  ylab = "HDAC9 (normalized expression)\n",
+                  color = "Fat.bin_10",
+                  palette = "npg",
+                  add = "jitter") +
+  stat_compare_means(label = "p.format",  method = "kruskal.test")
+ggpar(p1, legend = "bottom", legend.title = "Fat <10% vs >10%")
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".max100.plaque.Fat.bin_10.pdf"), plot = last_plot())
+```
+
+
 ## Plotting HDAC9 vs Fat 40 perc. in the plaque
 
 ```{r}
@@ -2061,6 +2572,23 @@ p6 <- ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(Fat.bin_40)),
 ggpar(p6, legend = "bottom", legend.title = "Fat <40% vs >40% by year of surgery and gender")
 ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.Fat.bin_40_Facet_byYear.byGender.pdf"), plot = last_plot())
 ```
+
+```{r}
+# Global test
+compare_means(HDAC9_max100 ~ Fat.bin_40,  data = AERNASE.clin.hdac9 %>% filter(!is.na(Fat.bin_40)), method = "kruskal.test")
+p1 <- ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(Fat.bin_40)), 
+                  x = "Fat.bin_40",
+                  y = "HDAC9_max100", 
+                  xlab = "Fat <40% vs >40%",
+                  ylab = "HDAC9 (normalized expression)\n",
+                  color = "Fat.bin_40",
+                  palette = "npg",
+                  add = "jitter") +
+  stat_compare_means(label = "p.format",  method = "kruskal.test")
+ggpar(p1, legend = "bottom", legend.title = "Fat <40% vs >40%")
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".max100.plaque.Fat.bin_40.pdf"), plot = last_plot())
+```
+
 
 
 ## Plotting HDAC9 vs IPH in the plaque
@@ -2129,6 +2657,24 @@ ggpar(p6, legend = "bottom", legend.title = "IPH by year of surgery and gender")
 ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.IPH.bin_Facet_byYear.byGender.pdf"), plot = last_plot())
 ```
 
+```{r}
+# Global test
+compare_means(HDAC9_max100 ~ IPH.bin,  data = AERNASE.clin.hdac9 %>% filter(!is.na(IPH.bin)), method = "kruskal.test")
+p1 <- ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(IPH.bin)), 
+                  x = "IPH.bin",
+                  y = "HDAC9_max100", 
+                  xlab = "Intraplaque hemorrhage (no vs. yes)",
+                  ylab = "HDAC9 (normalized expression)\n",
+                  color = "IPH.bin",
+                  palette = "npg",
+                  add = "jitter") +
+  stat_compare_means(label = "p.format",  method = "kruskal.test")
+ggpar(p1, legend = "bottom", legend.title = "IPH")
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".max100.plaque.IPH.bin.pdf"), plot = last_plot())
+```
+
+
+
 ## Plotting HDAC9 vs Calcification in the plaque
 
 ```{r}
@@ -2195,14 +2741,28 @@ ggpar(p6, legend = "bottom", legend.title = "Calcification by year of surgery an
 ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.Calc.bin_Facet_byYear.byGender.pdf"), plot = last_plot())
 ```
 
+```{r}
+compare_means(HDAC9_max100 ~ Calc.bin,  data = AERNASE.clin.hdac9 %>% filter(!is.na(Calc.bin)), method = "kruskal.test")
+p1 <- ggpubr::ggboxplot(AERNASE.clin.hdac9 %>% filter(!is.na(Calc.bin)), 
+                  x = "Calc.bin",
+                  y = "HDAC9_max100", 
+                  xlab = "Calcification (no/minor vs. moderate/heavy)",
+                  ylab = "HDAC9 (normalized expression)\n",
+                  color = "Calc.bin",
+                  palette = "npg",
+                  add = "jitter") +
+  stat_compare_means(label = "p.format",  method = "kruskal.test")
+ggpar(p1, legend = "bottom", legend.title = "Calcification")
+ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".max100.plaque.Calc.bin.pdf"), plot = last_plot())
+```
 
 
 # Session information
 
 --------------------------------------------------------------------------------
 
-    Version:      v1.0.5
-    Last update:  2023-05-31
+    Version:      v1.0.6
+    Last update:  2023-06-06
     Written by:   Sander W. van der Laan (s.w.vanderlaan-2[at]umcutrecht.nl).
     Description:  Script to analyse HDAC9 from the Ather-Express Biobank Study.
     Minimum requirements: R version 3.5.2 (2018-12-20) -- 'Eggshell Igloo', macOS Mojave (10.14.2).
@@ -2218,6 +2778,7 @@ ggsave(filename = paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".plaque.Ca
     _W_
 
     **Changes log**
+    * v1.0.6 Added maximum counts to HDAC9 in many graphs.
     * v1.0.5 Fixed forest plot and alternative boxplot for symptoms.
     * v1.0.4 Made histogram of PVI. Exported HDAC9 and PVI data.
     * v1.0.3 Small adaptations to PVI-plots.
