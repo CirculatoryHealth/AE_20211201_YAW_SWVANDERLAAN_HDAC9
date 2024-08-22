@@ -1,0 +1,302 @@
+---
+title: "HDAC9 variant vs RNAseq"
+author: '[Sander W. van der Laan, PhD](https://vanderlaan.science) | s.w.vanderlaan@gmail.com.'
+date: '`r Sys.Date()`'
+output:
+  html_notebook: 
+    cache: yes
+    code_folding: hide
+    collapse: yes
+    df_print: paged
+    fig.align: center
+    fig_caption: yes
+    fig_height: 10
+    fig_retina: 2
+    fig_width: 12
+    theme: paper
+    toc: yes
+    toc_float:
+      collapsed: no
+      smooth_scroll: yes
+    highlight: tango
+mainfont: Helvetica
+subtitle: Accompanying 'Plaque expression levels of HDAC9 in association with plaque vulnerability traits and secondary vascular events in patients undergoing carotid endarterectomy, an analysis in the Athero-EXPRESS Biobank.'
+editor_options:
+  chunk_output_type: inline
+bibliography: references.bib
+knit: worcs::cite_all
+---
+# General Setup
+
+```{r setup, include=FALSE}
+# We recommend that you prepare your raw data for analysis in 'prepare_data.R',
+# and end that file with either open_data(yourdata), or closed_data(yourdata).
+# Then, uncomment the line below to load the original or synthetic data
+# (whichever is available), to allow anyone to reproduce your code:
+# load_data()
+
+# further define some knitr-options.
+knitr::opts_chunk$set(fig.width = 12, fig.height = 8, fig.path = 'Figures/', 
+                      warning = TRUE, # show warnings during codebook generation
+                      message = TRUE, # show messages during codebook generation
+                      error = TRUE, # do not interrupt codebook generation in case of errors, 
+                                    # usually better for debugging
+                      echo = TRUE,  # show R code
+                      eval = TRUE)
+
+ggplot2::theme_set(ggplot2::theme_minimal())
+# pander::panderOptions("table.split.table", Inf)
+library("worcs")
+library("rmarkdown")
+
+```
+
+```{r echo = FALSE}
+rm(list = ls())
+```
+
+```{r LocalSystem, echo = FALSE}
+source("scripts/local.system.R")
+```
+
+```{r Source functions}
+source(paste0(PROJECT_loc, "/scripts/functions.R"))
+```
+
+```{r Setting: loading_packages, message=FALSE, warning=FALSE}
+source(paste0(PROJECT_loc, "/scripts/pack01.packages.R"))
+```
+
+```{r Setting: Colors, include = FALSE}
+source(paste0(PROJECT_loc, "/scripts/colors.R"))
+```
+
+
+# Background
+
+This notebook contains figures to plot the _HDAC9_ variant vs _HDAC9_ expression of the project "Plaque expression levels of _HDAC9_ in association with plaque vulnerability traits and secondary vascular events in patients undergoing carotid endarterectomy: an analysis in the Athero-EXPRESS Biobank.".
+
+
+# Loading data
+
+```{r Loading project data}
+# load(paste0(PROJECT_loc, "/",Today,".",PROJECTNAME,".bulkRNAseq.main_analysis.RData"))
+load(paste0(PROJECT_loc, "/20220319.",PROJECTNAME,".bulkRNAseq.main_analysis.RData"))
+```
+
+```{r}
+source("/Users/slaan3/git/CirculatoryHealth/AE_20211201_YAW_SWVANDERLAAN_HDAC9/scripts/local.system.R")
+Today = format(as.Date(as.POSIXlt(Sys.time())), "%Y%m%d")
+Today.Report = format(as.Date(as.POSIXlt(Sys.time())), "%A, %B %d, %Y")
+```
+
+# Extract genetic data
+
+Here we extract the relevant genetic data for rs2107595 - the _HDAC9_ variant.
+
+We produce a `.gen`-file which retains the probabilities and a `.ped`-file which contains hardcoded genotypes. We ran `convert_impute2dosage.pl` to convert the `.gen`-files to `.dosages`. 
+
+```{bash}
+AEGS_LOC="/Users/slaan3/PLINK/_AE_ORIGINALS/AEGS_COMBINED_EAGLE2_1000Gp3v5HRCr11"
+PLINK2="/Users/slaan3/bin/plink2"
+HERCULES_loc="/Users/slaan3/git/swvanderlaan/HerculesToolKit/_imputation"
+PERL="/Users/slaan3/miniforge3/bin/perl"
+
+$PLINK2 --bgen $AEGS_LOC/aegs.qc.1kgp3hrcr11.idfix.rsid.8bit.chr7.bgen 'ref-first' --sample $AEGS_LOC/aegs.qc.1kgp3hrcr11.idfix.8bit.chr7.sample --snp rs2107595 --export 'oxford-v2' --out $AEGS_LOC/aegs.qc.1kgp3hrcr11.idfix.rsid.8bit.chr7.rs2107595
+
+$PLINK2 --bgen $AEGS_LOC/aegs.qc.1kgp3hrcr11.idfix.rsid.8bit.chr7.bgen 'ref-first' --sample $AEGS_LOC/aegs.qc.1kgp3hrcr11.idfix.8bit.chr7.sample --snp rs2107595 --export 'ped' --out $AEGS_LOC/aegs.qc.1kgp3hrcr11.idfix.rsid.8bit.chr7.rs2107595
+
+$PERL $HERCULES_loc/convert_impute2dosage.pl $AEGS_LOC/aegs.qc.1kgp3hrcr11.idfix.rsid.8bit.chr7.rs2107595.gen NORM $AEGS_LOC/aegs.qc.1kgp3hrcr11.idfix.rsid.8bit.chr7.rs2107595.dose
+
+```
+
+# Load genetic data
+
+Now we're ready to load the genetic data. Firs the sample data.
+```{r}
+aegs_sample_meta_temp <- fread(paste0(MICHIMP_loc,"/aegs.qc.1kgp3hrcr11.chr7.sample"))
+aegs_sample_meta <- aegs_sample_meta_temp %>%
+  filter(SampleID!='0')
+aegs_sample_meta$Index <- row.names(aegs_sample_meta)
+rm(aegs_sample_meta_temp)
+```
+
+Next, the dosage data.
+```{r}
+hdac9_dose_temp <- as.data.table(t(fread(paste0(MICHIMP_loc,"/aegs.qc.1kgp3hrcr11.idfix.rsid.8bit.chr7.rs2107595.dose"))))
+names(hdac9_dose_temp)[names(hdac9_dose_temp) == "V1"] <- "rs2107595_dose"
+hdac9_dose <- hdac9_dose_temp %>%
+  filter(rs2107595_dose!='A' & rs2107595_dose!='G' & rs2107595_dose!='rs2107595')
+hdac9_dose$Index <- row.names(hdac9_dose)
+rm(hdac9_dose_temp)
+```
+
+Let's match this with the sample data; the order in the dosage data is the order in the sample data.
+
+```{r}
+aegs_sample_hdac9_dose <- aegs_sample_meta %>%
+  left_join(hdac9_dose, by = c("Index" = "Index"))
+```
+
+Now, we'll load the hardcoded genotypes. The A-allele is the Reference allele; the B-allele is the Alternative allele.
+
+```{r}
+hdac9_geno <- fread(paste0(MICHIMP_loc,"/aegs.qc.1kgp3hrcr11.idfix.rsid.8bit.chr7.rs2107595.ped"))
+names(hdac9_geno)[names(hdac9_geno) == "V2"] <- "SampleID"
+names(hdac9_geno)[names(hdac9_geno) == "V7"] <- "Ref_A_allele"
+names(hdac9_geno)[names(hdac9_geno) == "V8"] <- "Alt_B_allele"
+hdac9_geno$V1 <- NULL
+hdac9_geno$V3 <- NULL
+hdac9_geno$V4 <- NULL
+hdac9_geno$V5 <- NULL
+hdac9_geno$V6 <- NULL
+```
+
+We'll match that with the sample data and remove the intermediate datasets. At the same time we create a new variable which holds the genotypes.
+
+```{r}
+aegs_sample_hdac9_dose_geno <- aegs_sample_hdac9_dose %>%
+  left_join(hdac9_geno, by = c("SampleID" = "SampleID"))
+
+aegs_sample_hdac9_dose_geno$genotype <- paste0(aegs_sample_hdac9_dose_geno$Ref_A_allele,aegs_sample_hdac9_dose_geno$Alt_B_allele)
+
+rm(aegs_sample_hdac9_dose, hdac9_geno, aegs_sample_meta, hdac9_dose)
+```
+
+
+We'll keep the genetic map too.
+```{r}
+hdac9_geno_map <- fread(paste0(MICHIMP_loc,"/aegs.qc.1kgp3hrcr11.idfix.rsid.8bit.chr7.rs2107595.map"))
+names(hdac9_geno_map)[names(hdac9_geno_map) == "V1"] <- "chr"
+names(hdac9_geno_map)[names(hdac9_geno_map) == "V2"] <- "rsid"
+names(hdac9_geno_map)[names(hdac9_geno_map) == "V3"] <- "cm"
+names(hdac9_geno_map)[names(hdac9_geno_map) == "V4"] <- "bp"
+```
+
+
+We also need the KeyTable to match the `SampleID` to the `STUDY_NUMBER`; we need this to match with the gene expression data.
+
+```{r}
+cat("* get Athero-Express Genomics Study keys...")
+AEGS123.sampleList.keytable <- fread(paste0(AEGSQC_loc, "/QC/SELECTIONS/20200419.QC.AEGS123.sampleList.keytable.txt"))
+
+dim(AEGS123.sampleList.keytable)
+
+```
+
+Let's match this to our new genetic dataset.
+
+```{r}
+temp <- subset(aegs_sample_hdac9_dose_geno, select = c("SampleID", "rs2107595_dose", "genotype", "Ref_A_allele", "Alt_B_allele"))
+aegs_sample_hdac9_dose_geno_key <- AEGS123.sampleList.keytable %>%
+  left_join(temp, by = c("ID_1" = "SampleID"))
+rm(temp)
+
+```
+
+
+# Match the gene expression data
+
+Let's match the gene expression data to the genetic data.
+
+```{r}
+aegs_sample_hdac9_dose_geno_key$STUDY_NUMBER <- paste("ae",aegs_sample_hdac9_dose_geno_key$STUDY_NUMBER, sep = "")
+
+AERNASE.clin.hdac9.geno <- AERNASE.clin.hdac9 %>%
+  left_join(aegs_sample_hdac9_dose_geno_key, by = c("STUDY_NUMBER" = "STUDY_NUMBER"))
+AERNASE.clin.hdac9.geno$rs2107595_dose <- as.numeric(AERNASE.clin.hdac9.geno$rs2107595_dose)
+```
+
+# Plotting
+
+Here plot the hardcoded genotypes vs. the gene expression of _HDAC9_.
+
+```{r}
+library(ggpubr)
+temp <- subset(AERNASE.clin.hdac9.geno, !is.na(genotype) & !is.na(HDAC9) & genotype != "00" & HDAC9 < 100)
+temp$HDAC9_norm <- scale(temp$HDAC9)
+ggpubr::ggboxplot(data = temp,
+                  x = "genotype", y = "HDAC9", 
+                  color = "genotype", #palette = uithof_color_legend,
+                  add = "jitter", 
+                  xlab = "Genotype", ylab = "HDAC9 expression", 
+                  ggtheme = ggplot2::theme_minimal())
+ggsave(paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".HDAC9_variant_hardcoded_vs_HDAC9_expression_sm100.png"), width = 12, height = 8, plot = last_plot())
+ggsave(paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".HDAC9_variant_hardcoded_vs_HDAC9_expression_sm100.pdf"), width = 12, height = 8, plot = last_plot())
+ggpubr::ggboxplot(data = temp,
+                  x = "genotype", y = "HDAC9_norm", 
+                  color = "genotype", #palette = uithof_color_legend, 
+                  add = "jitter", 
+                  xlab = "Genotype", ylab = "HDAC9 expression (normalized)", 
+                  ggtheme = ggplot2::theme_minimal())
+ggsave(paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".HDAC9_variant_hardcoded_vs_HDAC9_expression_sm100_normalized.png"), width = 12, height = 8, plot = last_plot())
+ggsave(paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".HDAC9_variant_hardcoded_vs_HDAC9_expression_sm100_normalized.pdf"), width = 12, height = 8, plot = last_plot())
+rm(temp)
+```
+
+Here plot the dosages vs. the gene expression of _HDAC9_.
+
+```{r}
+library(ggpubr)
+temp <- subset(AERNASE.clin.hdac9.geno, !is.na(genotype) & !is.na(HDAC9) & genotype != "00" & HDAC9 < 100)
+temp$HDAC9_norm <- scale(temp$HDAC9)
+ggpubr::ggscatter(data = temp,
+                  x = "rs2107595_dose", y = "HDAC9", 
+                  color = "genotype", #palette = uithof_color_legend,
+                  # add = "jitter", 
+                  xlab = "Genotype", ylab = "HDAC9 expression", 
+                  ggtheme = ggplot2::theme_minimal())
+ggsave(paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".HDAC9_variant_dose_vs_HDAC9_expression_sm100.png"), width = 12, height = 8, plot = last_plot())
+ggsave(paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".HDAC9_variant_dose_vs_HDAC9_expression_sm100.pdf"), width = 12, height = 8, plot = last_plot())
+ggpubr::ggscatter(data = temp,
+                  x = "rs2107595_dose", y = "HDAC9_norm", 
+                  color = "genotype", #palette = uithof_color_legend, 
+                  # add = "jitter", 
+                  xlab = "Genotype", ylab = "HDAC9 expression (normalized)", 
+                  ggtheme = ggplot2::theme_minimal())
+ggsave(paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".HDAC9_variant_dose_vs_HDAC9_expression_sm100_normalized.png"), width = 12, height = 8, plot = last_plot())
+ggsave(paste0(PLOT_loc, "/", Today, ".",TRAIT_OF_INTEREST,".HDAC9_variant_dose_vs_HDAC9_expression_sm100_normalized.pdf"), width = 12, height = 8, plot = last_plot())
+rm(temp)
+```
+
+
+# Session information
+
+--------------------------------------------------------------------------------
+
+    Version:      v1.0.0
+    Last update:  2024-08-17
+    Written by:   Sander W. van der Laan (s.w.vanderlaan-2[at]umcutrecht.nl).
+    Description:  Script to plot HDAC9 genotypes vs. HDAC9 expression from the Ather-Express Biobank Study.
+    Minimum requirements: R version 3.5.2 (2018-12-20) -- 'Eggshell Igloo', macOS Mojave (10.14.2).
+    
+    **MoSCoW To-Do List**
+    The things we Must, Should, Could, and Would have given the time we have.
+    _M_
+
+    _S_
+
+    _C_
+
+    _W_
+
+    **Changes log**
+    * v1.0.0 Inital version.
+    
+
+--------------------------------------------------------------------------------
+
+```{r eval = TRUE}
+sessionInfo()
+```
+
+# Saving environment
+```{r Saving}
+save.image(paste0(PROJECT_loc, "/",Today,".",PROJECTNAME,".HDAC9_variant_vs_RNAseq.RData"))
+```
+
++-----------------------------------------------------------------------------------------------------------------------------------------+
+| <sup>© 1979-2023 Sander W. van der Laan | s.w.vanderlaan[at]gmail.com | [vanderlaan.science](https://vanderlaan.science).</sup> |
++-----------------------------------------------------------------------------------------------------------------------------------------+
+
+

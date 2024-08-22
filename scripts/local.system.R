@@ -18,6 +18,7 @@ STORAGE_loc = paste0(ROOT_loc, "/PLINK")
 AERNA_loc = paste0(STORAGE_loc, "/_AE_ORIGINALS/AERNA")
 AESCRNA_loc = paste0(STORAGE_loc, "/_AE_ORIGINALS/AESCRNA/prepped_data")
 AEGSQC_loc = paste0(STORAGE_loc, "/_AE_ORIGINALS/AEGS_COMBINED_QC2018")
+MICHIMP_loc=paste0(STORAGE_loc,"/_AE_ORIGINALS/AEGS_COMBINED_EAGLE2_1000Gp3v5HRCr11")
 
 ### SOME VARIABLES WE NEED DOWN THE LINE
 TRAIT_OF_INTEREST = "HDAC9" # Phenotype
@@ -53,7 +54,6 @@ ifelse(!dir.exists(file.path(ANALYSIS_loc, "/COX")),
        dir.create(file.path(ANALYSIS_loc, "/COX")), 
        FALSE)
 COX_loc = paste0(ANALYSIS_loc, "/COX")
-
 
 
 setwd(paste0(PROJECT_loc))
